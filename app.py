@@ -960,11 +960,11 @@ class VisionaryBookApp:
             
             with col1:
                 st.markdown("**Original Image**")
-                st.image(original_image, use_column_width=True)
+                st.image(original_image, use_container_width=True)
             
             with col2:
                 st.markdown("**Enhanced for Analysis**")
-                st.image(resized_image, use_column_width=True)
+                st.image(resized_image, use_container_width=True)
             
             # Image info
             st.info(f"📏 **Image Info:** {original_image.size[0]}x{original_image.size[1]} pixels, {original_image.mode} mode")
