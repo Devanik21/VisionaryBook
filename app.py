@@ -590,7 +590,7 @@ class AIAnalysisEngine:
         
         if st.session_state.gemini_api_key:
             genai.configure(api_key=st.session_state.gemini_api_key)
-            self.model = genai.GenerativeModel('gemma-3-27b-it')
+            self.model = genai.GenerativeModel('gemini-2.0-flash')
         else:
             self.model = None
     
