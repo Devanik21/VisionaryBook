@@ -67,14 +67,14 @@ AudioManager: gTTS integration
 FlashcardManager: Study system
 ImageProcessor: Enhancement utilities
 
-Smart Features
+# Smart Features
 
 Image enhancement for better AI analysis
 Tag extraction and categorization
 Automatic flashcard generation
 Study session tracking
 
-🚀 Getting Started
+# 🚀 Getting Started
 
 Install Dependencies:
 bashpip install streamlit google-generativeai pillow gtts sqlite3
@@ -98,7 +98,7 @@ Generate flashcards for study
 
 
 
-🎯 Perfect For
+# 🎯 Perfect For
 
 Farmers: Plant identification and agricultural insights
 Students: Educational object analysis and study materials
