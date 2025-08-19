@@ -4,7 +4,7 @@ from PIL import Image, ImageEnhance, ImageFilter
 import io
 import base64
 import json
-import sqlite3
+from tinydb import TinyDB, Query
 import datetime
 import uuid
 from gtts import gTTS
@@ -376,222 +376,209 @@ def load_custom_css():
 
 # Database setup
 class DatabaseManager:
-    def __init__(self, db_path="visionarybook.db"):
+    def __init__(self, db_path="visionarybook_data"):
         self.db_path = db_path
-        self.init_database()
-    
-    def init_database(self):
-        """Initialize database with required tables"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Main analysis table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS analyses (
-            id TEXT PRIMARY KEY,
-            timestamp DATETIME,
-            image_name TEXT,
-            image_data BLOB,
-            quick_summary TEXT,
-            detailed_description TEXT,
-            fun_facts TEXT,
-            category TEXT,
-            language TEXT,
-            audio_path TEXT,
-            tags TEXT,
-            rating INTEGER DEFAULT 0
-        )
-        """)
-        
-        # Flashcards table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS flashcards (
-            id TEXT PRIMARY KEY,
-            analysis_id TEXT,
-            front_text TEXT,
-            back_text TEXT,
-            difficulty INTEGER DEFAULT 1,
-            last_reviewed DATETIME,
-            correct_count INTEGER DEFAULT 0,
-            total_attempts INTEGER DEFAULT 0,
-            FOREIGN KEY (analysis_id) REFERENCES analyses (id)
-        )
-        """)
-        
-        # User preferences table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS preferences (
-            key TEXT PRIMARY KEY,
-            value TEXT
-        )
-        """)
-        
-        # Study sessions table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS study_sessions (
-            id TEXT PRIMARY KEY,
-            timestamp DATETIME,
-            duration INTEGER,
-            cards_studied INTEGER,
-            correct_answers INTEGER
-        )
-        """)
-        
-        conn.commit()
-        conn.close()
+        self.analyses_db = TinyDB(f"{db_path}_analyses.json")
+        self.flashcards_db = TinyDB(f"{db_path}_flashcards.json")
+        self.preferences_db = TinyDB(f"{db_path}_preferences.json")
+        self.sessions_db = TinyDB(f"{db_path}_sessions.json")
+        self.query = Query()
     
     def save_analysis(self, analysis_data: Dict) -> str:
         """Save analysis to database"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         analysis_id = str(uuid.uuid4())
         
-        cursor.execute("""
-        INSERT INTO analyses 
-        (id, timestamp, image_name, image_data, quick_summary, detailed_description, 
-         fun_facts, category, language, tags)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            analysis_id,
-            datetime.datetime.now(),
-            analysis_data.get('image_name', ''),
-            analysis_data.get('image_data', b''),
-            analysis_data.get('quick_summary', ''),
-            analysis_data.get('detailed_description', ''),
-            analysis_data.get('fun_facts', ''),
-            analysis_data.get('category', ''),
-            analysis_data.get('language', 'English'),
-            json.dumps(analysis_data.get('tags', []))
-        ))
+        # Convert image data to base64 for JSON storage
+        image_b64 = None
+        if analysis_data.get('image_data'):
+            image_b64 = base64.b64encode(analysis_data['image_data']).decode('utf-8')
         
-        conn.commit()
-        conn.close()
+        analysis_record = {
+            'id': analysis_id,
+            'timestamp': datetime.datetime.now().isoformat(),
+            'image_name': analysis_data.get('image_name', ''),
+            'image_data': image_b64,
+            'quick_summary': analysis_data.get('quick_summary', ''),
+            'detailed_description': analysis_data.get('detailed_description', ''),
+            'fun_facts': analysis_data.get('fun_facts', ''),
+            'category': analysis_data.get('category', ''),
+            'language': analysis_data.get('language', 'English'),
+            'tags': analysis_data.get('tags', []),
+            'rating': 0
+        }
         
+        self.analyses_db.insert(analysis_record)
         return analysis_id
     
     def get_analysis(self, analysis_id: str) -> Optional[Dict]:
         """Get analysis by ID"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT * FROM analyses WHERE id = ?", (analysis_id,))
-        result = cursor.fetchone()
-        
-        conn.close()
+        result = self.analyses_db.search(self.query.id == analysis_id)
         
         if result:
-            columns = [desc[0] for desc in cursor.description]
-            return dict(zip(columns, result))
+            analysis = result[0]
+            # Convert base64 back to bytes if needed
+            if analysis.get('image_data'):
+                analysis['image_data'] = base64.b64decode(analysis['image_data'])
+            return analysis
         return None
     
     def get_all_analyses(self, limit: int = 50) -> List[Dict]:
         """Get all analyses with limit"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        all_analyses = self.analyses_db.all()
         
-        cursor.execute("""
-        SELECT id, timestamp, image_name, category, language, tags 
-        FROM analyses 
-        ORDER BY timestamp DESC 
-        LIMIT ?
-        """, (limit,))
+        # Sort by timestamp (newest first)
+        sorted_analyses = sorted(
+            all_analyses, 
+            key=lambda x: x.get('timestamp', ''), 
+            reverse=True
+        )
         
-        results = cursor.fetchall()
-        conn.close()
-        
+        # Return limited results without image data for performance
         analyses = []
-        for result in results:
-            analysis = {
-                'id': result[0],
-                'timestamp': result[1],
-                'image_name': result[2],
-                'category': result[3],
-                'language': result[4],
-                'tags': json.loads(result[5]) if result[5] else []
+        for analysis in sorted_analyses[:limit]:
+            limited_analysis = {
+                'id': analysis['id'],
+                'timestamp': analysis['timestamp'],
+                'image_name': analysis['image_name'],
+                'category': analysis['category'],
+                'language': analysis['language'],
+                'tags': analysis.get('tags', [])
             }
-            analyses.append(analysis)
+            analyses.append(limited_analysis)
         
         return analyses
     
     def save_flashcard(self, flashcard_data: Dict) -> str:
         """Save flashcard to database"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         flashcard_id = str(uuid.uuid4())
         
-        cursor.execute("""
-        INSERT INTO flashcards 
-        (id, analysis_id, front_text, back_text, difficulty)
-        VALUES (?, ?, ?, ?, ?)
-        """, (
-            flashcard_id,
-            flashcard_data.get('analysis_id', ''),
-            flashcard_data.get('front_text', ''),
-            flashcard_data.get('back_text', ''),
-            flashcard_data.get('difficulty', 1)
-        ))
+        flashcard_record = {
+            'id': flashcard_id,
+            'analysis_id': flashcard_data.get('analysis_id', ''),
+            'front_text': flashcard_data.get('front_text', ''),
+            'back_text': flashcard_data.get('back_text', ''),
+            'difficulty': flashcard_data.get('difficulty', 1),
+            'last_reviewed': None,
+            'correct_count': 0,
+            'total_attempts': 0
+        }
         
-        conn.commit()
-        conn.close()
-        
+        self.flashcards_db.insert(flashcard_record)
         return flashcard_id
     
     def get_flashcards_for_analysis(self, analysis_id: str) -> List[Dict]:
         """Get flashcards for specific analysis"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        flashcards = self.flashcards_db.search(self.query.analysis_id == analysis_id)
         
-        cursor.execute("""
-        SELECT * FROM flashcards WHERE analysis_id = ?
-        ORDER BY difficulty ASC
-        """, (analysis_id,))
+        # Sort by difficulty
+        return sorted(flashcards, key=lambda x: x.get('difficulty', 1))
+    
+    def update_flashcard_stats(self, flashcard_id: str, correct: bool):
+        """Update flashcard statistics"""
+        def update_stats(doc):
+            doc['total_attempts'] = doc.get('total_attempts', 0) + 1
+            doc['last_reviewed'] = datetime.datetime.now().isoformat()
+            
+            if correct:
+                doc['correct_count'] = doc.get('correct_count', 0) + 1
+            else:
+                # Increase difficulty if answered incorrectly
+                current_difficulty = doc.get('difficulty', 1)
+                doc['difficulty'] = min(current_difficulty + 1, 3)
+            
+            return doc
         
-        results = cursor.fetchall()
-        conn.close()
+        self.flashcards_db.update(update_stats, self.query.id == flashcard_id)
+    
+    def save_study_session(self, session_data: Dict) -> str:
+        """Save study session to database"""
+        session_id = str(uuid.uuid4())
         
-        flashcards = []
-        for result in results:
-            columns = [desc[0] for desc in cursor.description]
-            flashcard = dict(zip(columns, result))
-            flashcards.append(flashcard)
+        session_record = {
+            'id': session_id,
+            'timestamp': datetime.datetime.now().isoformat(),
+            'duration': session_data.get('duration', 0),
+            'cards_studied': session_data.get('cards_studied', 0),
+            'correct_answers': session_data.get('correct_answers', 0)
+        }
         
-        return flashcards
+        self.sessions_db.insert(session_record)
+        return session_id
     
     def get_statistics(self) -> Dict:
         """Get user statistics"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        total_analyses = len(self.analyses_db.all())
+        total_flashcards = len(self.flashcards_db.all())
+        total_sessions = len(self.sessions_db.all())
         
-        # Total analyses
-        cursor.execute("SELECT COUNT(*) FROM analyses")
-        total_analyses = cursor.fetchone()[0]
+        # Calculate average accuracy
+        all_sessions = self.sessions_db.all()
+        total_correct = sum(session.get('correct_answers', 0) for session in all_sessions)
+        total_studied = sum(session.get('cards_studied', 0) for session in all_sessions)
         
-        # Total flashcards
-        cursor.execute("SELECT COUNT(*) FROM flashcards")
-        total_flashcards = cursor.fetchone()[0]
-        
-        # Total study sessions
-        cursor.execute("SELECT COUNT(*) FROM study_sessions")
-        total_sessions = cursor.fetchone()[0]
-        
-        # Average accuracy
-        cursor.execute("""
-        SELECT AVG(CAST(correct_answers AS FLOAT) / NULLIF(cards_studied, 0)) 
-        FROM study_sessions 
-        WHERE cards_studied > 0
-        """)
-        avg_accuracy = cursor.fetchone()[0] or 0
-        
-        conn.close()
+        avg_accuracy = (total_correct / total_studied * 100) if total_studied > 0 else 0
         
         return {
             'total_analyses': total_analyses,
             'total_flashcards': total_flashcards,
             'total_sessions': total_sessions,
-            'average_accuracy': avg_accuracy * 100 if avg_accuracy else 0
+            'average_accuracy': avg_accuracy
         }
+    
+    def get_preference(self, key: str, default=None):
+        """Get user preference"""
+        result = self.preferences_db.search(self.query.key == key)
+        if result:
+            return result[0].get('value', default)
+        return default
+    
+    def set_preference(self, key: str, value):
+        """Set user preference"""
+        if self.preferences_db.search(self.query.key == key):
+            self.preferences_db.update({'value': value}, self.query.key == key)
+        else:
+            self.preferences_db.insert({'key': key, 'value': value})
+    
+    def delete_analysis(self, analysis_id: str) -> bool:
+        """Delete analysis and associated flashcards"""
+        # Delete flashcards first
+        self.flashcards_db.remove(self.query.analysis_id == analysis_id)
+        
+        # Delete analysis
+        removed = self.analyses_db.remove(self.query.id == analysis_id)
+        return len(removed) > 0
+    
+    def search_analyses(self, search_term: str, category: str = None) -> List[Dict]:
+        """Search analyses by term and/or category"""
+        all_analyses = self.analyses_db.all()
+        
+        filtered_analyses = []
+        search_term_lower = search_term.lower() if search_term else ""
+        
+        for analysis in all_analyses:
+            # Check category filter
+            if category and analysis.get('category') != category:
+                continue
+            
+            # Check search term in various fields
+            if search_term:
+                searchable_text = f"{analysis.get('image_name', '')} {analysis.get('quick_summary', '')} {' '.join(analysis.get('tags', []))}"
+                if search_term_lower not in searchable_text.lower():
+                    continue
+            
+            # Remove image data for performance
+            limited_analysis = {
+                'id': analysis['id'],
+                'timestamp': analysis['timestamp'],
+                'image_name': analysis['image_name'],
+                'category': analysis['category'],
+                'language': analysis['language'],
+                'tags': analysis.get('tags', [])
+            }
+            filtered_analyses.append(limited_analysis)
+        
+        # Sort by timestamp (newest first)
+        return sorted(filtered_analyses, key=lambda x: x.get('timestamp', ''), reverse=True)
 
 # AI Analysis Engine
 class AIAnalysisEngine:
@@ -605,7 +592,7 @@ class AIAnalysisEngine:
         
         if st.session_state.gemini_api_key:
             genai.configure(api_key=st.session_state.gemini_api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-pro')
+            self.model = genai.GenerativeModel('gemma-3-27b-it')
         else:
             self.model = None
     
