@@ -73,9 +73,7 @@ def load_custom_css():
     .header-title {
         font-size: 2.5rem;
         font-weight: 700;
-        background: var(--accent-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: var(--primary-text);
         margin: 0;
         display: flex;
         align-items: center;
