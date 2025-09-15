@@ -47,12 +47,7 @@ def load_custom_css():
         --info-color: #2196f3;
     }
     
-    /* Hide Streamlit elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {display: none;}
-    
+
     /* Main container styling */
     .stApp {
         background: var(--primary-bg);
