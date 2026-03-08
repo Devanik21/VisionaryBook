@@ -67,19 +67,19 @@ def load_custom_css():
     /* Global Variables with Transparency (Glassmorphism) */
     :root {{
         --primary-bg: #0f0f0f;
-        --secondary-bg: rgba(15, 15, 15, 0.94);
-        --accent-bg: rgba(25, 25, 25, 0.9);
-        --hover-bg: rgba(51, 51, 51, 0.9);
+        --secondary-bg: rgba(15, 15, 15, 0.45);
+        --accent-bg: rgba(25, 25, 25, 0.35);
+        --hover-bg: rgba(51, 51, 51, 0.6);
         --primary-text: #ffffff;
-        --secondary-text: #b3b3b3;
+        --secondary-text: #eeeeee;
         --accent-text: #4CAF50;
-        --border-color: rgba(255, 255, 255, 0.15);
-        --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        --border-color: rgba(255, 255, 255, 0.2);
+        --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
         --accent-gradient: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
         --danger-color: #f44336;
         --warning-color: #ff9800;
         --info-color: #2196f3;
-        --glass-blur: blur(5px);
+        --glass-blur: blur(15px);
     }}
     
 
