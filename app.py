@@ -26,7 +26,7 @@ except Exception as e:
 # Page config
 st.set_page_config(
     page_title="VisionaryBook",
-    page_icon="Vision",
+    page_icon="🪻",
     layout="wide",
     initial_sidebar_state="expanded"
 )
