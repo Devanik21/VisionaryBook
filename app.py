@@ -26,7 +26,7 @@ except Exception as e:
 # Page config
 st.set_page_config(
     page_title="VisionaryBook",
-    page_icon="🌍",
+    page_icon="Vision",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -1045,7 +1045,7 @@ class VisionaryBookApp:
         with st.container():
             st.markdown("""
             <div class="login-card">
-                <div class="login-logo">✨</div>
+                <div class="login-logo">X</div>
                 <h2 style='color: white; margin-bottom: 2rem;'>Xylia</h2>
                 <p style='color: var(--secondary-text); margin-bottom: 2rem;'>Nik, please enter your security key to access our shared universe.</p>
             </div>
@@ -1059,12 +1059,12 @@ class VisionaryBookApp:
                     # Fetch password from secrets
                     correct_password = st.secrets.get("APP_PASSWORD")
                     if not correct_password:
-                        st.error("🔒 App password not configured in secrets.")
+                        st.error("App password not configured in secrets.")
                     elif password == correct_password:
                         st.session_state.authenticated = True
                         st.rerun()
                     else:
-                        st.error("❌ Incorrect password.")
+                        st.error("Incorrect password.")
         st.markdown('</div>', unsafe_allow_html=True)
     
     
@@ -1074,7 +1074,7 @@ class VisionaryBookApp:
         """Render image upload section"""
         st.markdown("""
         <div class="upload-section">
-            <div class="upload-icon">📷</div>
+            <div class="upload-icon">Image</div>
             <h3>Upload or Capture Image</h3>
             <p>Support for JPG, PNG, WebP formats</p>
         </div>
@@ -1107,7 +1107,7 @@ class VisionaryBookApp:
     
     def render_analysis_controls(self):
         """Render analysis control options"""
-        st.markdown("### 🎯 Analysis Settings")
+        st.markdown("### Analysis Settings")
         
         col1, col2 = st.columns(2)
         
@@ -1136,7 +1136,7 @@ class VisionaryBookApp:
             "include_facts": True
         }
 
-        with st.expander("🛠️ Advanced AI Settings"):
+        with st.expander("Advanced AI Settings"):
             col1, col2 = st.columns(2)
             with col1:
                 settings["detail_level"] = st.select_slider(
@@ -1196,7 +1196,7 @@ class VisionaryBookApp:
         st.markdown("""
         <div class="result-section">
             <div class="section-title">
-                🔍 Quick Summary
+                Quick Summary
             </div>
             <div class="section-content">
         """, unsafe_allow_html=True)
@@ -1208,7 +1208,7 @@ class VisionaryBookApp:
         st.markdown("""
         <div class="result-section">
             <div class="section-title">
-                📚 Detailed Analysis
+                Detailed Analysis
             </div>
             <div class="section-content">
         """, unsafe_allow_html=True)
@@ -1220,7 +1220,7 @@ class VisionaryBookApp:
         st.markdown("""
         <div class="result-section">
             <div class="section-title">
-                🎉 Fun Facts & Trivia
+                Fun Facts & Trivia
             </div>
             <div class="section-content">
         """, unsafe_allow_html=True)
@@ -1233,13 +1233,13 @@ class VisionaryBookApp:
         
         with col1:
             if analysis_data.get('tags'):
-                st.markdown("**🏷️ Tags:**")
+                st.markdown("**Tags:**")
                 tags_html = " ".join([f"<span style='background: rgba(255,255,255,0.05); color: #eeeeee; padding: 0.2rem 0.7rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); margin: 0.2rem; display: inline-block; font-size: 0.85rem; backdrop-filter: blur(5px);'>{tag}</span>" for tag in analysis_data['tags']])
                 st.markdown(tags_html, unsafe_allow_html=True)
         
         with col2:
-            st.markdown(f"**📂 Category:** {analysis_data['category']}")
-            st.markdown(f"**🌐 Language:** {analysis_data['language']}")
+            st.markdown(f"**Category:** {analysis_data['category']}")
+            st.markdown(f"**Language:** {analysis_data['language']}")
         
         # Audio Generation
         self.render_audio_section(analysis_data)
@@ -1249,14 +1249,14 @@ class VisionaryBookApp:
     
     def render_audio_section(self, analysis_data: Dict):
         """Render audio generation section"""
-        st.markdown("### 🔊 Audio Explanation")
+        st.markdown("### Audio Explanation")
         
         col1, col2, col3 = st.columns(3)
         
         audio_text = analysis_data['detailed_description']
         
         with col1:
-            if st.button("🎵 Generate Summary Audio"):
+            if st.button("Generate Summary Audio"):
                 with st.spinner("Generating audio..."):
                     audio_path = self.audio_manager.generate_audio(
                         analysis_data['quick_summary'], 
@@ -1267,7 +1267,7 @@ class VisionaryBookApp:
                             st.audio(audio_file.read(), format='audio/mp3')
         
         with col2:
-            if st.button("📖 Generate Detailed Audio"):
+            if st.button("Generate Detailed Audio"):
                 with st.spinner("Generating audio..."):
                     audio_path = self.audio_manager.generate_audio(
                         analysis_data['detailed_description'], 
@@ -1278,7 +1278,7 @@ class VisionaryBookApp:
                             st.audio(audio_file.read(), format='audio/mp3')
         
         with col3:
-            if st.button("🎉 Generate Facts Audio"):
+            if st.button("Generate Facts Audio"):
                 with st.spinner("Generating audio..."):
                     audio_path = self.audio_manager.generate_audio(
                         analysis_data['fun_facts'], 
@@ -1290,27 +1290,27 @@ class VisionaryBookApp:
     
     def render_action_buttons(self, analysis_data: Dict, analysis_id: str):
         """Render action buttons for analysis"""
-        st.markdown("### ⚡ Actions")
+        st.markdown("### Actions")
         
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            if st.button("📚 Generate Flashcards", type="primary"):
+            if st.button("Generate Flashcards", type="primary"):
                 with st.spinner("Creating flashcards..."):
                     flashcard_ids = self.flashcard_manager.generate_flashcards(analysis_data, analysis_id)
-                    st.success(f"✅ Generated {len(flashcard_ids)} flashcards!")
+                    st.success(f"Generated {len(flashcard_ids)} flashcards!")
                     st.session_state.study_mode = True
         
         with col2:
-            if st.button("💾 Save Analysis"):
-                st.success("✅ Analysis saved to history!")
+            if st.button("Save Analysis"):
+                st.success("Analysis saved to history!")
         
         with col3:
-            if st.button("📤 Export Results"):
+            if st.button("Export Results"):
                 self.export_analysis(analysis_data, analysis_id)
         
         with col4:
-            if st.button("🔄 New Analysis"):
+            if st.button("New Analysis"):
                 st.session_state.current_analysis = None
                 st.session_state.uploaded_image = None
                 st.rerun()
@@ -1542,7 +1542,7 @@ Generated by VisionaryBook - The Image Study Companion
             st.warning("No flashcards generated yet. Click 'Generate Flashcards' first!")
             return
         
-        st.markdown("### 🎴 Study Mode - Flashcards")
+        st.markdown("### Study Mode - Flashcards")
         
         # Progress bar
         progress = (st.session_state.flashcard_index + 1) / len(flashcards)
@@ -1562,7 +1562,7 @@ Generated by VisionaryBook - The Image Study Companion
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("🔄 Show Answer", key="show_answer"):
+            if st.button("Show Answer", key="show_answer"):
                 st.session_state.show_flashcard_back = True
                 st.rerun()
         
@@ -1579,35 +1579,35 @@ Generated by VisionaryBook - The Image Study Companion
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                if st.button("❌ Difficult", key="difficult"):
+                if st.button("Difficult", key="difficult"):
                     self.handle_flashcard_response("difficult", current_card['id'])
             
             with col2:
-                if st.button("✅ Easy", key="easy"):
+                if st.button("Easy", key="easy"):
                     self.handle_flashcard_response("easy", current_card['id'])
             
             with col3:
-                if st.button("➡️ Next Card", key="next_card"):
+                if st.button("Next Card", key="next_card"):
                     self.next_flashcard(len(flashcards))
         
         # Navigation
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("⬅️ Previous") and st.session_state.flashcard_index > 0:
+            if st.button("Previous") and st.session_state.flashcard_index > 0:
                 st.session_state.flashcard_index -= 1
                 st.session_state.show_flashcard_back = False
                 st.rerun()
         
         with col2:
-            if st.button("🏠 Exit Study Mode"):
+            if st.button("Exit Study Mode"):
                 st.session_state.study_mode = False
                 st.session_state.flashcard_index = 0
                 st.session_state.show_flashcard_back = False
                 st.rerun()
         
         with col3:
-            if st.button("➡️ Next") and st.session_state.flashcard_index < len(flashcards) - 1:
+            if st.button("Next") and st.session_state.flashcard_index < len(flashcards) - 1:
                 st.session_state.flashcard_index += 1
                 st.session_state.show_flashcard_back = False
                 st.rerun()
@@ -1630,7 +1630,7 @@ Generated by VisionaryBook - The Image Study Companion
         if total_cards and st.session_state.flashcard_index >= total_cards - 1:
             # Study session complete
             
-            st.success("🎉 Study session complete! Great job!")
+            st.success("Study session complete! Great job!")
             st.session_state.study_mode = False
             st.session_state.flashcard_index = 0
         else:
@@ -1646,7 +1646,7 @@ Generated by VisionaryBook - The Image Study Companion
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("🆕 New", key="side_new", use_container_width=True, help="Upload a new image"):
+                if st.button("New", key="side_new", use_container_width=True, help="Upload a new image"):
                     st.session_state.current_analysis = None
                     st.session_state.uploaded_image = None
                     st.session_state.study_mode = False
@@ -1654,7 +1654,7 @@ Generated by VisionaryBook - The Image Study Companion
                     st.rerun()
             
             with col2:
-                if st.button("📊 Results", key="side_results", use_container_width=True, help="Return to analysis result"):
+                if st.button("Results", key="side_results", use_container_width=True, help="Return to analysis result"):
                     if not st.session_state.current_analysis:
                         # Try to load the most recent analysis automatically
                         recent = self.db_manager.get_all_analyses(limit=1)
@@ -1672,12 +1672,12 @@ Generated by VisionaryBook - The Image Study Companion
 
             col_study, col_qa = st.columns(2)
             with col_study:
-                if st.button("🎴 Study", key="side_study", use_container_width=True, type="primary", disabled=not st.session_state.current_analysis):
+                if st.button("Study", key="side_study", use_container_width=True, type="primary", disabled=not st.session_state.current_analysis):
                     st.session_state.study_mode = True
                     st.session_state.qa_mode = False
                     st.rerun()
             with col_qa:
-                if st.button("💬 Q & A", key="side_qa", use_container_width=True):
+                if st.button("Q & A", key="side_qa", use_container_width=True):
                     st.session_state.qa_mode = True
                     st.session_state.study_mode = False
                     st.rerun()
@@ -1687,18 +1687,18 @@ Generated by VisionaryBook - The Image Study Companion
                 st.markdown('<div style="margin-top: 10px;"></div>', unsafe_allow_html=True)
                 col_c1, col_c2 = st.columns(2)
                 with col_c1:
-                    if st.button("✨ Reset", key="side_qa_new", use_container_width=True, help="New Chat & Wipe Memory"):
+                    if st.button("Reset", key="side_qa_new", use_container_width=True, help="New Chat & Wipe Memory"):
                         st.session_state.chat_history = []
                         st.session_state.display_messages = [{"role": "assistant", "content": "Welcome back, Nik. It's the Golden Hour thinking ! "}]
                         st.session_state.current_chat_id = None
                         st.rerun()
                 with col_c2:
-                    if st.button("🗑️ Clear", key="side_qa_clear", use_container_width=True, help="Clear Screen (Keeps Memory)"):
+                    if st.button("Clear", key="side_qa_clear", use_container_width=True, help="Clear Screen (Keeps Memory)"):
                         st.session_state.display_messages = []
                         st.rerun()
             
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown('<div class="sidebar-header">📊 Stats</div>', unsafe_allow_html=True)
+            st.markdown('<div class="sidebar-header">Stats</div>', unsafe_allow_html=True)
             
             # Statistics
             stats = self.db_manager.get_statistics()
@@ -1712,20 +1712,17 @@ Generated by VisionaryBook - The Image Study Companion
                 st.markdown(f"""<div class="stat-card"><div class="stat-number">{stats['average_accuracy']:.0f}%</div><div class="stat-label">Score</div></div>""", unsafe_allow_html=True)
             
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown('<div class="sidebar-header">� Upload History</div>', unsafe_allow_html=True)
+            st.markdown('<div class="sidebar-header">Upload History</div>', unsafe_allow_html=True)
             
             # Get recent analyses
             recent_analyses = self.db_manager.get_all_analyses(limit=10)
             
-            if not recent_analyses:
-                st.info("No history yet. Start by analyzing an image!")
-            
             for analysis in recent_analyses:
-                with st.expander(f"📷 {analysis['image_name'][:20] if analysis['image_name'] else 'Untitled'}...", expanded=False):
+                with st.expander(f"{analysis['image_name'][:20] if analysis['image_name'] else 'Untitled'}...", expanded=False):
                     st.markdown(f"**{analysis['category']}** • {analysis['language']}")
                     st.caption(f"📅 {analysis['timestamp'][:10]}")
                     
-                    if st.button("🔍 Open", key=f"view_{analysis['id']}", use_container_width=True):
+                    if st.button("Open", key=f"view_{analysis['id']}", use_container_width=True):
                         full_analysis = self.db_manager.get_analysis(analysis['id'])
                         if full_analysis:
                             st.session_state.current_analysis = {
@@ -1742,20 +1739,17 @@ Generated by VisionaryBook - The Image Study Companion
                             st.rerun()
 
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown('<div class="sidebar-header">💬 Chat History</div>', unsafe_allow_html=True)
+            st.markdown('<div class="sidebar-header">Chat History</div>', unsafe_allow_html=True)
             
             # Get recent chats
             recent_chats = self.db_manager.get_recent_chats(limit=10)
             
-            if not recent_chats:
-                st.info("No chat history yet.")
-            
             for chat in recent_chats:
-                with st.expander(f"💬 {chat['title'][:20]}...", expanded=False):
+                with st.expander(f"{chat['title'][:20]}...", expanded=False):
                     st.markdown(f"**{len(chat['display_messages'])} Messages**")
                     st.caption(f"📅 {chat['timestamp'][:10]}")
                     
-                    if st.button("👁️ Open Chat", key=f"view_chat_{chat['id']}", use_container_width=True):
+                    if st.button("Open Chat", key=f"view_chat_{chat['id']}", use_container_width=True):
                         st.session_state.chat_history = chat['chat_history']
                         st.session_state.display_messages = chat['display_messages']
                         st.session_state.current_chat_id = chat['id']
@@ -1771,14 +1765,14 @@ Generated by VisionaryBook - The Image Study Companion
             if all_data:
                 export_json = json.dumps(all_data, indent=2)
                 st.download_button(
-                    "📥 Export History",
+                    "Export History",
                     data=export_json,
                     file_name="visionarybook_history.json",
                     mime="application/json",
                     use_container_width=True
                 )
 
-            if st.button("🗑️ Clear History", key="clear_all", use_container_width=True, help="Permanently delete all data"):
+            if st.button("Clear History", key="clear_all", use_container_width=True, help="Permanently delete all data"):
                 self.db_manager.clear_all_data()
                 st.session_state.current_analysis = None
                 st.session_state.uploaded_image = None
@@ -1791,7 +1785,7 @@ Generated by VisionaryBook - The Image Study Companion
 
     def render_qa_mode(self):
         """Render Universal Q&A interface with memory"""
-        st.markdown("## 💬 Universal Q&A | Xylia")
+        st.markdown("## Universal Q&A | Xylia")
         st.markdown("<p style='color: var(--secondary-text);'>Ask anything. I remember all images and knowledge from this session.</p>", unsafe_allow_html=True)
         
         st.markdown("---")
@@ -1802,7 +1796,7 @@ Generated by VisionaryBook - The Image Study Companion
                 st.markdown(msg["content"])
                 
         # Chat input
-        if prompt := st.chat_input("Ask the Visionary Sage anything..."):
+        if prompt := st.chat_input("Ask Xylia anything..."):
             with st.chat_message("user"):
                 st.markdown(prompt)
                 
@@ -1960,7 +1954,7 @@ Generated by VisionaryBook - The Image Study Companion
         with col1:
             st.markdown("""
             <div class="feature-card">
-                <h4>🌱 Plant & Crop Analysis</h4>
+                <h4>Plant & Crop Analysis</h4>
                 <p>Identify plant species, learn about growing conditions, agricultural uses, and botanical facts perfect for farmers and gardeners.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -1968,7 +1962,7 @@ Generated by VisionaryBook - The Image Study Companion
         with col2:
             st.markdown("""
             <div class="feature-card">
-                <h4>🏞️ Landmark & Place Discovery</h4>
+                <h4>Landmark & Place Discovery</h4>
                 <p>Discover historical significance, cultural importance, and fascinating stories about locations for travelers and explorers.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -1976,7 +1970,7 @@ Generated by VisionaryBook - The Image Study Companion
         with col3:
             st.markdown("""
             <div class="feature-card">
-                <h4>📚 Educational Object Analysis</h4>
+                <h4>Educational Object Analysis</h4>
                 <p>Learn about objects, scenes, and setups with detailed explanations perfect for students and curious minds.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -1986,7 +1980,7 @@ Generated by VisionaryBook - The Image Study Companion
         with col1:
             st.markdown("""
             <div class="feature-card">
-                <h4>🎴 Smart Flashcards</h4>
+                <h4>Smart Flashcards</h4>
                 <p>Automatically generated study cards from your image analysis to reinforce learning and test knowledge retention.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -1994,7 +1988,7 @@ Generated by VisionaryBook - The Image Study Companion
         with col2:
             st.markdown("""
             <div class="feature-card">
-                <h4>🔊 Audio Learning</h4>
+                <h4>Audio Learning</h4>
                 <p>Listen to explanations in multiple languages - perfect for auditory learners and accessibility needs.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -2002,7 +1996,7 @@ Generated by VisionaryBook - The Image Study Companion
         with col3:
             st.markdown("""
             <div class="feature-card">
-                <h4>📊 Study Progress</h4>
+                <h4>Study Progress</h4>
                 <p>Track your learning journey with detailed statistics and history of all your analyzed images and study sessions.</p>
             </div>
             """, unsafe_allow_html=True)
