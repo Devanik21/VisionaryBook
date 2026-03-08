@@ -5,5 +5,8 @@ libffi-dev
 shared-mime-info
 libcairo2
 libharfbuzz0b
+libfontconfig1
+libfreetype6
 libxml2-dev
 libxslt1-dev
+libpangoxft-1.0-0
