@@ -840,8 +840,8 @@ class AIAnalysisEngine:
                 facts_response = self.model.generate_content([facts_prompt, image], generation_config=generation_config)
                 fun_facts = facts_response.text
             
-            # Extract tags
-            tags = self._extract_tags(quick_summary + " " + detailed_description)
+            # 4. Extract intelligent tags via AI
+            tags = self._extract_tags(image, quick_summary, detailed_description, category)
             
             return {
                 'quick_summary': quick_summary,
@@ -856,23 +856,41 @@ class AIAnalysisEngine:
             st.error(f"Analysis error: {str(e)}")
             return None
     
-    def _extract_tags(self, text: str) -> List[str]:
-        """Extract relevant tags from analysis text"""
-        # Simple keyword extraction (can be enhanced with NLP)
-        common_words = {'the', 'is', 'are', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'a', 'an'}
-        
-        # Remove punctuation and convert to lowercase
-        clean_text = re.sub(r'[^\w\s]', ' ', text.lower())
-        words = clean_text.split()
-        
-        # Filter out common words and short words
-        tags = []
-        for word in words:
-            if len(word) > 3 and word not in common_words:
-                if word not in tags and len(tags) < 10:  # Limit to 10 tags
-                    tags.append(word)
-        
-        return tags[:8]  # Return top 8 tags
+    def _extract_tags(self, image: Image.Image, summary: str, details: str, category: str) -> List[str]:
+        """Extract intelligent tags using the AI model"""
+        if not self.model:
+            return ["visionary", "analysis", "ai"]
+            
+        try:
+            tag_prompt = f"""Based on the following analysis of a {category} image, generate exactly 5-8 highly relevant, specific, one or two-word tags. 
+            Do not use generic words like 'image', 'picture', 'are', 'the'. 
+            Return ONLY the tags separated by commas, nothing else. No formatting, no markdown.
+            
+            Summary: {summary[:500]}
+            """
+            # Use lower temperature for more deterministic/focused tag generation
+            tag_config = {"temperature": 0.2, "max_output_tokens": 100}
+            
+            # We don't always need to send the image again for tags if we have the summary,
+            # but sending it ensures maximum context accuracy.
+            response = self.model.generate_content([tag_prompt, image], generation_config=tag_config)
+            
+            # Process response: split by comma, strip whitespace, remove empty strings
+            raw_tags = response.text.split(',')
+            cleaned_tags = [tag.strip().lower() for tag in raw_tags if tag.strip()]
+            
+            # Filter out any weird AI artifacts or overly long tags
+            final_tags = [tag for tag in cleaned_tags if len(tag) <= 20 and "\n" not in tag]
+            
+            # Fallback if generation failed
+            if not final_tags:
+                return ["vision", "analysis", category.lower()]
+                
+            return final_tags[:8]
+            
+        except Exception as e:
+            # Fallback to simple extraction on error
+            return ["vision", "analysis", "ai"]
 
 # Audio Generation
 class AudioManager:
@@ -913,57 +931,80 @@ class AudioManager:
 
 # Flashcard System
 class FlashcardManager:
-    def __init__(self, db_manager: DatabaseManager):
+    def __init__(self, db_manager: DatabaseManager, ai_engine: AIAnalysisEngine):
         self.db_manager = db_manager
+        self.ai_engine = ai_engine
     
     def generate_flashcards(self, analysis_data: Dict, analysis_id: str) -> List[str]:
-        """Generate flashcards from analysis data"""
+        """Generate high-quality flashcards using AI"""
         flashcards = []
         
-        # Extract key points from quick summary
-        summary_points = analysis_data['quick_summary'].split('\n')
-        
-        for i, point in enumerate(summary_points):
-            if point.strip() and len(point.strip()) > 10:
-                # Create question from the point
-                front_text = f"What can you tell me about: {point.strip()[:50]}...?"
+        if not self.ai_engine.model:
+             # Fallback to a basic card if model is offline
+             return [self.db_manager.save_flashcard({
+                 'analysis_id': analysis_id,
+                 'front_text': "What was the main subject?",
+                 'back_text': analysis_data.get('quick_summary', 'Unknown')[:100],
+                 'difficulty': 1
+             })]
+
+        try:
+            # Create a prompt to generate QA pairs
+            qa_prompt = f"""Based on the following analysis, create exactly 4 highly-effective educational flashcards. 
+            Formulate them as Question and Answer pairs. 
+            The questions should test deep understanding, not just rote memorization.
+            Format the output strictly as a JSON array of objects with 'q' and 'a' keys. No markdown, no backticks, just the raw JSON array.
+            
+            Example Format:
+            [
+              {{"q": "What is the primary function of...", "a": "It serves to..."}},
+              {{"q": "How does X relate to Y in this context?", "a": "X provides the..."}}
+            ]
+            
+            Analysis Text:
+            Summary: {analysis_data.get('quick_summary', '')}
+            Details: {analysis_data.get('detailed_description', '')}
+            Facts: {analysis_data.get('fun_facts', '')}
+            """
+            
+            # Use lower temperature for structured JSON output
+            generation_config = {"temperature": 0.2, "max_output_tokens": 800}
+            response = self.ai_engine.model.generate_content(qa_prompt, generation_config=generation_config)
+            
+            # Clean up the response to ensure it's valid JSON (sometimes models add markdown backticks)
+            json_str = response.text.strip()
+            if json_str.startswith("```json"):
+                json_str = json_str[7:]
+            if json_str.startswith("```"):
+                json_str = json_str[3:]
+            if json_str.endswith("```"):
+                json_str = json_str[:-3]
                 
-                # Find corresponding detailed info
-                back_text = self._find_detailed_info(point, analysis_data['detailed_description'])
-                
-                if back_text:
+            qa_pairs = json.loads(json_str.strip())
+            
+            # Save generated cards to database
+            for i, pair in enumerate(qa_pairs):
+                if 'q' in pair and 'a' in pair:
                     flashcard_data = {
                         'analysis_id': analysis_id,
-                        'front_text': front_text,
-                        'back_text': back_text,
-                        'difficulty': 1
+                        'front_text': pair['q'],
+                        'back_text': pair['a'],
+                        'difficulty': 1 if i < 2 else 2 # Make the latter half slightly harder by default
                     }
-                    
                     flashcard_id = self.db_manager.save_flashcard(flashcard_data)
                     flashcards.append(flashcard_id)
-        
-        # Generate additional flashcards from fun facts
-        if analysis_data.get('fun_facts'):
-            facts = analysis_data['fun_facts'].split('\n')
-            for fact in facts[:3]:  # Limit to 3 additional cards
-                if fact.strip() and len(fact.strip()) > 20:
-                    flashcard_data = {
-                        'analysis_id': analysis_id,
-                        'front_text': "Fun Fact Question",
-                        'back_text': fact.strip(),
-                        'difficulty': 2
-                    }
                     
-                    flashcard_id = self.db_manager.save_flashcard(flashcard_data)
-                    flashcards.append(flashcard_id)
+        except Exception as e:
+            st.error(f"Error generating smart flashcards: {str(e)}")
+            # Fallback
+            flashcards.append(self.db_manager.save_flashcard({
+                 'analysis_id': analysis_id,
+                 'front_text': "Error generating detailed cards. Main summary?",
+                 'back_text': analysis_data.get('quick_summary', 'Unknown')[:100],
+                 'difficulty': 1
+             }))
         
         return flashcards
-    
-    def _find_detailed_info(self, point: str, detailed_text: str) -> str:
-        """Find relevant detailed information for a point"""
-        # Simple approach - return first 200 chars of detailed description
-        # Can be enhanced with semantic similarity
-        return detailed_text[:200] + "..." if len(detailed_text) > 200 else detailed_text
 
 # Image Processing Utilities
 class ImageProcessor:
@@ -1010,7 +1051,7 @@ class VisionaryBookApp:
         self.db_manager = DatabaseManager()
         self.ai_engine = AIAnalysisEngine()
         self.audio_manager = AudioManager()
-        self.flashcard_manager = FlashcardManager(self.db_manager)
+        self.flashcard_manager = FlashcardManager(self.db_manager, self.ai_engine)
         self.image_processor = ImageProcessor()
         
         # Initialize session state
@@ -1813,18 +1854,45 @@ Generated by VisionaryBook - The Image Study Companion
                         # Prepare full historical context from database
                         history_context = ""
                         all_analyses = self.db_manager.analyses_db.all()
+                        
+                        # Fetch the actual image data for the most recent analysis for true multimodal context
+                        recent_image_data = None
+                        
                         if all_analyses:
                             history_context = "--- PAST IMAGE ANALYSIS HISTORY ---\n"
-                            for a in all_analyses[-10:]: # Limit to 10 most recent to prevent token overflow
+                            
+                            # Limit to 10 most recent text summaries to prevent token overflow
+                            for a in all_analyses[-10:]: 
                                 history_context += f"- Image: {a.get('image_name', 'Unknown')} (Category: {a.get('category', 'Unknown')})\n"
                                 history_context += f"  Summary: {a.get('quick_summary', '')}\n"
+                                history_context += f"  Tags: {', '.join(a.get('tags', []))}\n"
                             history_context += "-----------------------------------\n"
+                            
+                            # Get the absolute most recent image (if it has data)
+                            most_recent = all_analyses[-1]
+                            if most_recent.get('image_data'):
+                                try:
+                                    img_bytes = most_recent['image_data']
+                                    if isinstance(img_bytes, str):
+                                        img_bytes = base64.b64decode(img_bytes)
+                                    recent_image_data = Image.open(io.BytesIO(img_bytes))
+                                except Exception as e:
+                                    # Fallback gracefully if image decode fails
+                                    print(f"Failed to load recent image for Q&A context: {e}")
 
-                        # Add persona, history context, and current prompt
-                        persona = "You are Xylia, a highly capable, flexible, and modern AI assistant. You have perfect memory of all images and discussions in this session. Adapt your tone, length, and style exactly to match Nik's request. If he asks for a short answer, be concise; if casual, be casual."
+                        # Refined Universal Expert Persona (Xylia - Serious, Professional)
+                        persona = """You are Xylia, a highly intelligent, serious, and professional AI expert specializing in visual analysis. 
+                        You have perfect, persistent memory of all images and discussions in this session. 
+                        Respond directly, naturally, and with profound expertise. Avoid casual filler, dramatic flair, or robotic phrasing. 
+                        Your goal is to provide precise, insightful answers based on the visual evidence and your deep knowledge base. Address the user (Nik) respectfully."""
                         
                         full_prompt = f"{persona}\n\n{history_context}\n\nUser Question: {prompt}"
-                        payload.append({"role": "user", "parts": [full_prompt]})
+                        
+                        # Use true multimodal memory if an image is available
+                        if recent_image_data is not None:
+                             payload.append({"role": "user", "parts": [recent_image_data, full_prompt]})
+                        else:
+                             payload.append({"role": "user", "parts": [full_prompt]})
                         
                         response = self.ai_engine.model.generate_content(payload)
                         reply = response.text
