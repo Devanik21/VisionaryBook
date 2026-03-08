@@ -31,37 +31,79 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Helper for background image
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
 # Custom CSS for professional dark theme
 def load_custom_css():
-    st.markdown("""
+    bg_img_style = ""
+    
+    # Try to load local background image if it exists
+    # Assuming the user will name it 'background.jpg' or 'background.png'
+    bg_file = None
+    for ext in ['jpg', 'jpeg', 'png', 'webp']:
+        possible_path = os.path.join(os.getcwd(), f"Aesthetic_2.{ext}")
+        if os.path.exists(possible_path):
+            bg_file = possible_path
+            break
+            
+    if bg_file:
+        bin_str = get_base64_of_bin_file(bg_file)
+        bg_img_style = f"""
+        background-image: url("data:image/png;base64,{bin_str}");
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
+        """
+    
+    st.markdown(f"""
     <style>
     /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    /* Global Variables */
-    :root {
+    /* Global Variables with Transparency (Glassmorphism) */
+    :root {{
         --primary-bg: #0f0f0f;
-        --secondary-bg: #1a1a1a;
-        --accent-bg: #262626;
-        --hover-bg: #333333;
+        --secondary-bg: rgba(26, 26, 26, 0.75);
+        --accent-bg: rgba(38, 38, 38, 0.6);
+        --hover-bg: rgba(51, 51, 51, 0.8);
         --primary-text: #ffffff;
         --secondary-text: #b3b3b3;
         --accent-text: #4CAF50;
-        --border-color: #333333;
-        --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        --border-color: rgba(255, 255, 255, 0.1);
+        --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         --accent-gradient: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
         --danger-color: #f44336;
         --warning-color: #ff9800;
         --info-color: #2196f3;
-    }
+        --glass-blur: blur(12px);
+    }}
     
 
     /* Main container styling */
-    .stApp {
+    .stApp {{
         background: var(--primary-bg);
+        {bg_img_style}
         font-family: 'Inter', sans-serif;
         color: var(--primary-text);
-    }
+    }}
+    
+    /* Glassmorphism effects */
+    .stApp > div:first-child {{
+        background: transparent;
+    }}
+
+    .main-header, .upload-section, .feature-card, .result-section, 
+    .sidebar-content, .stat-card, .flashcard, .stExpander {{
+        background: var(--secondary-bg) !important;
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color) !important;
+        box-shadow: var(--shadow) !important;
+    }}
     
     /* Header styling */
     .main-header {
