@@ -109,6 +109,33 @@ def load_custom_css():
         visibility: hidden;
     }}
 
+    /* Global Chat Input Transparency (Universal Q&A) */
+    [data-testid="stChatInput"] {{
+        background-color: transparent !important;
+        border: none !important;
+        padding-bottom: 2rem !important;
+    }}
+
+    [data-testid="stChatInput"] > div {{
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important;
+    }}
+
+    [data-testid="stChatInput"] textarea {{
+        background-color: transparent !important;
+        color: white !important;
+    }}
+
+    [data-testid="stChatMessage"] {{
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color) !important;
+    }}
+
     .sidebar-content, .stSidebar {{
         background: var(--secondary-bg) !important;
         backdrop-filter: var(--sidebar-blur) !important;
