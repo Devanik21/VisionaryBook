@@ -106,16 +106,16 @@ def load_custom_css():
     }}
     
     /* Header styling */
-    .main-header {
+    .main-header {{
         background: var(--secondary-bg);
         padding: 1.5rem 2rem;
         border-radius: 16px;
         margin-bottom: 2rem;
         border: 1px solid var(--border-color);
         box-shadow: var(--shadow);
-    }
+    }}
     
-    .header-title {
+    .header-title {{
         font-size: 2.5rem;
         font-weight: 700;
         color: var(--primary-text);
@@ -123,17 +123,17 @@ def load_custom_css():
         display: flex;
         align-items: center;
         gap: 1rem;
-    }
+    }}
     
-    .header-subtitle {
+    .header-subtitle {{
         font-size: 1.1rem;
         color: var(--secondary-text);
         margin-top: 0.5rem;
         font-weight: 400;
-    }
+    }}
     
     /* Upload section */
-    .upload-section {
+    .upload-section {{
         background: var(--secondary-bg);
         padding: 2rem;
         border-radius: 16px;
@@ -143,28 +143,28 @@ def load_custom_css():
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
-    }
+    }}
     
-    .upload-section:hover {
+    .upload-section:hover {{
         border-color: var(--accent-text);
         transform: translateY(-2px);
         box-shadow: var(--shadow);
-    }
+    }}
     
-    .upload-icon {
+    .upload-icon {{
         font-size: 3rem;
         color: var(--accent-text);
         margin-bottom: 1rem;
         animation: pulse 2s infinite;
-    }
+    }}
     
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-    }
+    @keyframes pulse {{
+        0%, 100% {{ opacity: 1; }}
+        50% {{ opacity: 0.7; }}
+    }}
     
     /* Card styling */
-    .feature-card {
+    .feature-card {{
         background: var(--secondary-bg);
         padding: 1.5rem;
         border-radius: 12px;
@@ -173,15 +173,15 @@ def load_custom_css():
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
-    }
+    }}
     
-    .feature-card:hover {
+    .feature-card:hover {{
         transform: translateY(-4px);
         box-shadow: var(--shadow);
         border-color: var(--accent-text);
-    }
+    }}
     
-    .feature-card::before {
+    .feature-card::before {{
         content: '';
         position: absolute;
         top: 0;
@@ -189,19 +189,19 @@ def load_custom_css():
         width: 100%;
         height: 4px;
         background: var(--accent-gradient);
-    }
+    }}
     
     /* Result sections */
-    .result-section {
+    .result-section {{
         background: var(--secondary-bg);
         padding: 2rem;
         border-radius: 16px;
         margin-bottom: 1.5rem;
         border: 1px solid var(--border-color);
         box-shadow: var(--shadow);
-    }
+    }}
     
-    .section-title {
+    .section-title {{
         font-size: 1.5rem;
         font-weight: 600;
         color: var(--primary-text);
@@ -209,16 +209,16 @@ def load_custom_css():
         display: flex;
         align-items: center;
         gap: 0.5rem;
-    }
+    }}
     
-    .section-content {
+    .section-content {{
         color: var(--secondary-text);
         line-height: 1.6;
         font-size: 1rem;
-    }
+    }}
     
     /* Button styling */
-    .stButton > button {
+    .stButton > button {{
         background: var(--accent-gradient);
         color: white;
         border: none;
@@ -228,35 +228,35 @@ def load_custom_css():
         font-size: 1rem;
         transition: all 0.3s ease;
         box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
-    }
+    }}
     
-    .stButton > button:hover {
+    .stButton > button:hover {{
         transform: translateY(-2px);
         box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
-    }
+    }}
     
     /* Selectbox styling */
-    .stSelectbox > div > div {
+    .stSelectbox > div > div {{
         background: var(--accent-bg);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         color: var(--primary-text);
-    }
+    }}
     
     /* Sidebar styling */
-    .css-1d391kg {
+    .css-1d391kg {{
         background: var(--secondary-bg);
-    }
+    }}
     
-    .sidebar-content {
+    .sidebar-content {{
         background: var(--accent-bg);
         padding: 1.2rem;
         border-radius: 12px;
         margin-bottom: 1rem;
         border: 1px solid var(--border-color);
-    }
+    }}
     
-    .sidebar-header {
+    .sidebar-header {{
         font-size: 1.1rem;
         font-weight: 700;
         color: var(--accent-text);
@@ -268,23 +268,23 @@ def load_custom_css():
         letter-spacing: 0.5px;
         text-transform: uppercase;
         opacity: 0.9;
-    }
+    }}
 
-    .stSidebar {
+    .stSidebar {{
         background-color: var(--secondary-bg) !important;
         border-right: 1px solid var(--border-color);
-    }
+    }}
     
-    .stSidebar [data-testid="stVerticalBlock"] {
+    .stSidebar [data-testid="stVerticalBlock"] {{
         gap: 0.5rem;
-    }
+    }}
 
-    .action-button {
+    .action-button {{
         margin-bottom: 0.8rem;
-    }
+    }}
     
     /* Flashcard styling */
-    .flashcard {
+    .flashcard {{
         background: var(--secondary-bg);
         border-radius: 12px;
         padding: 1.5rem;
@@ -297,151 +297,151 @@ def load_custom_css():
         flex-direction: column;
         justify-content: center;
         text-align: center;
-    }
+    }}
     
-    .flashcard:hover {
+    .flashcard:hover {{
         transform: rotateY(5deg);
         box-shadow: var(--shadow);
-    }
+    }}
     
-    .flashcard-front {
+    .flashcard-front {{
         font-size: 1.2rem;
         font-weight: 600;
         color: var(--primary-text);
-    }
+    }}
     
-    .flashcard-back {
+    .flashcard-back {{
         font-size: 1rem;
         color: var(--secondary-text);
         line-height: 1.6;
-    }
+    }}
     
     /* Progress bar */
-    .stProgress > div > div {
+    .stProgress > div > div {{
         background: var(--accent-gradient);
-    }
+    }}
     
     /* Stats styling */
-    .stat-container {
+    .stat-container {{
         display: flex;
         gap: 1rem;
         margin-bottom: 2rem;
-    }
+    }}
     
-    .stat-card {
+    .stat-card {{
         background: var(--secondary-bg);
         padding: 1rem;
         border-radius: 8px;
         text-align: center;
         flex: 1;
         border: 1px solid var(--border-color);
-    }
+    }}
     
-    .stat-number {
+    .stat-number {{
         font-size: 2rem;
         font-weight: 700;
         color: var(--accent-text);
-    }
+    }}
     
-    .stat-label {
+    .stat-label {{
         font-size: 0.9rem;
         color: var(--secondary-text);
         margin-top: 0.5rem;
-    }
+    }}
     
     /* Audio player styling */
-    audio {
+    audio {{
         width: 100%;
         height: 40px;
         border-radius: 8px;
-    }
+    }}
     
     /* Loading animation */
-    .loading-spinner {
+    .loading-spinner {{
         display: flex;
         justify-content: center;
         align-items: center;
         margin: 2rem 0;
-    }
+    }}
     
-    .spinner {
+    .spinner {{
         width: 40px;
         height: 40px;
         border: 4px solid var(--border-color);
         border-top: 4px solid var(--accent-text);
         border-radius: 50%;
         animation: spin 1s linear infinite;
-    }
+    }}
     
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
+    @keyframes spin {{
+        0% {{ transform: rotate(0deg); }}
+        100% {{ transform: rotate(360deg); }}
+    }}
     
     /* Mobile responsiveness */
-    @media (max-width: 768px) {
-        .header-title {
+    @media (max-width: 768px) {{
+        .header-title {{
             font-size: 2rem;
-        }
+        }}
         
-        .stat-container {
+        .stat-container {{
             flex-direction: column;
-        }
+        }}
         
-        .upload-section {
+        .upload-section {{
             padding: 1.5rem;
-        }
-    }
+        }}
+    }}
     
     /* Custom scrollbar */
-    ::-webkit-scrollbar {
+    ::-webkit-scrollbar {{
         width: 8px;
-    }
+    }}
     
-    ::-webkit-scrollbar-track {
+    ::-webkit-scrollbar-track {{
         background: var(--primary-bg);
-    }
+    }}
     
-    ::-webkit-scrollbar-thumb {
+    ::-webkit-scrollbar-thumb {{
         background: var(--accent-text);
         border-radius: 4px;
-    }
+    }}
     
-    ::-webkit-scrollbar-thumb:hover {
+    ::-webkit-scrollbar-thumb:hover {{
         background: #45a049;
-    }
+    }}
     
     /* Notification styling */
-    .notification {
+    .notification {{
         padding: 1rem;
         border-radius: 8px;
         margin: 1rem 0;
         border-left: 4px solid;
-    }
+    }}
     
-    .notification.success {
+    .notification.success {{
         background: rgba(76, 175, 80, 0.1);
         border-left-color: var(--accent-text);
         color: var(--accent-text);
-    }
+    }}
     
-    .notification.error {
+    .notification.error {{
         background: rgba(244, 67, 54, 0.1);
         border-left-color: var(--danger-color);
         color: var(--danger-color);
-    }
+    }}
     
-    .notification.warning {
+    .notification.warning {{
         background: rgba(255, 152, 0, 0.1);
         border-left-color: var(--warning-color);
         color: var(--warning-color);
-    }
+    }}
     
-    .notification.info {
+    .notification.info {{
         background: rgba(33, 150, 243, 0.1);
         border-left-color: var(--info-color);
         color: var(--info-color);
-    }
+    }}
     </style>
     """, unsafe_allow_html=True)
 
