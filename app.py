@@ -74,13 +74,13 @@ def load_custom_css():
         --hover-bg: rgba(51, 51, 51, 0.6);
         --primary-text: #ffffff;
         --secondary-text: #eeeeee;
-        --accent-text: #4CAF50;
+        --accent-text: #B388FF;
         --border-color: rgba(255, 255, 255, 0.2);
         --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-        --accent-gradient: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        --danger-color: #f44336;
-        --warning-color: #ff9800;
-        --info-color: #2196f3;
+        --accent-gradient: linear-gradient(135deg, #B388FF 0%, #448AFF 100%);
+        --danger-color: #ff5252;
+        --warning-color: #ffd740;
+        --info-color: #40c4ff;
         --glass-blur: blur(15px);
         --sidebar-blur: blur(3px);
     }}
