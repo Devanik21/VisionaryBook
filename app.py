@@ -67,7 +67,8 @@ def load_custom_css():
     /* Global Variables with Transparency (Glassmorphism) */
     :root {{
         --primary-bg: #0f0f0f;
-        --secondary-bg: rgba(15, 15, 15, 0.45);
+        --secondary-bg: rgba(15, 15, 15, 0.65);
+        --card-bg: rgba(10, 10, 10, 0.2);
         --accent-bg: rgba(25, 25, 25, 0.35);
         --hover-bg: rgba(51, 51, 51, 0.6);
         --primary-text: #ffffff;
@@ -96,9 +97,16 @@ def load_custom_css():
         background: transparent;
     }}
 
-    .main-header, .upload-section, .feature-card, .result-section, 
-    .sidebar-content, .stat-card, .flashcard, .stExpander {{
+    .main-header, .sidebar-content {{
         background: var(--secondary-bg) !important;
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color) !important;
+        box-shadow: var(--shadow) !important;
+    }}
+
+    .upload-section, .feature-card, .result-section, .stat-card, .flashcard, .stExpander {{
+        background: var(--card-bg) !important;
         backdrop-filter: var(--glass-blur);
         -webkit-backdrop-filter: var(--glass-blur);
         border: 1px solid var(--border-color) !important;
