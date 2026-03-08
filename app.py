@@ -700,37 +700,42 @@ class AIAnalysisEngine:
             "Comprehensive": "Be extremely thorough. Provide deep insights and extensive details."
         }.get(detail_level, "")
 
+        # Universal Expert Persona
+        persona = f"""You are the Visionary Sage, an unparalleled global authority and top 1% expert across every possible field of knowledge — science, history, philosophy, art, and beyond. 
+        Your tone is exceptionally calm, wise, and profoundly educational. Speak with absolute confidence, as one who possesses an omniscient understanding of the universe, yet remain humble and inviting to the learner.
+        Address the user in {language}."""
+
         category_prompts = {
-            "Plants & Crops": f"""You are a botanical study guide. Analyze this image in {language}. 
-            Focus on plant identification, scientific names, growing conditions, uses, and agricultural significance. {tone_instruction} {detail_instruction}""",
+            "Plants & Crops": f"""{persona} 
+            Analyze this botanical or agricultural specimen with masterful precision. Identify its essence, scientific lineage, and its vital role in the ecosystem. {tone_instruction} {detail_instruction}""",
             
-            "Landmarks & Places": f"""You are a travel and history study guide. Analyze this image in {language}.
-            Focus on geographical features, historical significance, cultural importance, and interesting facts about the location. {tone_instruction} {detail_instruction}""",
+            "Landmarks & Places": f"""{persona}
+            Observe this location through the lens of history and geography. Reveal its profound significance, cultural weight, and the stories embedded in its soil. {tone_instruction} {detail_instruction}""",
             
-            "Objects & Scenes": f"""You are a comprehensive study guide. Analyze this image in {language}.
-            Identify all objects, their purposes, materials, historical context, and practical applications. {tone_instruction} {detail_instruction}""",
+            "Objects & Scenes": f"""{persona}
+            Deconstruct this scene or object with the insight of a master craftsman and historian. Explain its composition, purpose, and the human or natural ingenuity it represents. {tone_instruction} {detail_instruction}""",
             
-            "General": f"""You are a comprehensive study guide. Analyze this image in {language}.
-            Identify and explain everything visible, providing educational value and interesting facts. {tone_instruction} {detail_instruction}"""
+            "General": f"""{persona}
+            Offer a universal analysis of everything visible. Connect the dots between the observed elements and the broader tapestry of knowledge. {tone_instruction} {detail_instruction}"""
         }
         
         base_prompt = category_prompts.get(category, category_prompts["General"])
         
         try:
             # 1. Quick Summary
-            quick_prompt = f"{base_prompt}\n\nFormat your response as a concise bullet-point summary of the main elements."
+            quick_prompt = f"{base_prompt}\n\nAs the Sage, provide a swift yet profound overview of the manifesting elements in this frame. Format as bullet points."
             quick_response = self.model.generate_content([quick_prompt, image], generation_config=generation_config)
             quick_summary = quick_response.text
             
             # 2. Detailed Description
-            detailed_prompt = f"{base_prompt}\n\nProvide a comprehensive analysis covering identification, technical info, history, and applications."
+            detailed_prompt = f"{base_prompt}\n\nDeeply deconstruct this observation. Provide an expert-level narrative that explores the lineage, purpose, technical mastery, and universal connections of what is seen."
             detailed_response = self.model.generate_content([detailed_prompt, image], generation_config=generation_config)
             detailed_description = detailed_response.text
             
             # 3. Fun Facts (Conditional)
-            fun_facts = "Fun facts version disabled in settings."
+            fun_facts = "The path of trivia was not selected for this inquiry."
             if settings.get("include_facts", True):
-                facts_prompt = f"{base_prompt}\n\nShare 3-5 fascinating, lesser-known facts and trivia about what's shown."
+                facts_prompt = f"{base_prompt}\n\nReveal 3-5 hidden truths or fascinating enigmas about what is observed — insights that only a master of the highest order would recognize."
                 facts_response = self.model.generate_content([facts_prompt, image], generation_config=generation_config)
                 fun_facts = facts_response.text
             
