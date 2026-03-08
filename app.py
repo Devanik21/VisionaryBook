@@ -214,20 +214,24 @@ def load_custom_css():
     
     /* Button styling */
     .stButton > button {{
-        background: var(--accent-gradient);
-        color: white;
-        border: none;
+        background: transparent !important;
+        color: white !important;
+        border: 1px solid var(--border-color) !important;
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
         border-radius: 8px;
         padding: 0.75rem 2rem;
-        font-weight: 600;
+        font-weight: 500;
         font-size: 1rem;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+        box-shadow: none !important;
     }}
     
     .stButton > button:hover {{
+        background: var(--hover-bg) !important;
+        border-color: var(--accent-text) !important;
+        color: var(--accent-text) !important;
         transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
     }}
     
     /* Selectbox styling */
