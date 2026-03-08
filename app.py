@@ -99,12 +99,14 @@ def load_custom_css():
         background: transparent;
     }}
 
-    .main-header {{
-        background: var(--header-bg) !important;
-        backdrop-filter: var(--glass-blur);
-        -webkit-backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--border-color) !important;
-        box-shadow: var(--shadow) !important;
+    /* Hide Streamlit Header/Toolbar (the black box) */
+    header, [data-testid="stHeader"] {{
+        visibility: hidden;
+        height: 0px;
+    }}
+    
+    #MainMenu, footer {{
+        visibility: hidden;
     }}
 
     .sidebar-content, .stSidebar {{
