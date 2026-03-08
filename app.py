@@ -639,71 +639,65 @@ class AIAnalysisEngine:
     
     # ... keep the rest of the class the same ...
     
-    def analyze_image(self, image: Image.Image, language: str = "English", 
-                     category: str = "General") -> Dict:
-        """Analyze image using Gemini API"""
+    def analyze_image(self, image: Image.Image, settings: Dict) -> Dict:
+        """Analyze image using Gemini API with advanced settings"""
         if not self.model:
             raise ValueError("Gemini API not configured")
         
-        # Prepare prompts based on category
+        language = settings.get("language", "English")
+        category = settings.get("category", "General")
+        detail_level = settings.get("detail_level", "Balanced")
+        tone = settings.get("tone", "Educational")
+        
+        # Generation config
+        generation_config = {
+            "temperature": settings.get("temperature", 0.7),
+            "max_output_tokens": settings.get("max_tokens", 2048),
+        }
+        
+        # Prepare prompts based on settings
+        tone_instruction = f"Use a {tone.lower()} tone in your response."
+        detail_instruction = {
+            "Concise": "Be very direct and brief. Use minimal words.",
+            "Balanced": "Provide a moderate level of detail - helpful but not overwhelming.",
+            "Comprehensive": "Be extremely thorough. Provide deep insights and extensive details."
+        }.get(detail_level, "")
+
         category_prompts = {
             "Plants & Crops": f"""You are a botanical study guide. Analyze this image in {language}. 
-            Focus on plant identification, scientific names, growing conditions, uses, and agricultural significance.
-            Provide practical information for farmers and gardeners.""",
+            Focus on plant identification, scientific names, growing conditions, uses, and agricultural significance. {tone_instruction} {detail_instruction}""",
             
             "Landmarks & Places": f"""You are a travel and history study guide. Analyze this image in {language}.
-            Focus on geographical features, historical significance, cultural importance, and interesting facts about the location.
-            Provide information useful for tourists and travelers.""",
+            Focus on geographical features, historical significance, cultural importance, and interesting facts about the location. {tone_instruction} {detail_instruction}""",
             
             "Objects & Scenes": f"""You are a comprehensive study guide. Analyze this image in {language}.
-            Identify all objects, their purposes, materials, historical context, and practical applications.
-            Provide educational insights for students and curious learners.""",
+            Identify all objects, their purposes, materials, historical context, and practical applications. {tone_instruction} {detail_instruction}""",
             
             "General": f"""You are a comprehensive study guide. Analyze this image in {language}.
-            Identify and explain everything visible, providing educational value and interesting facts."""
+            Identify and explain everything visible, providing educational value and interesting facts. {tone_instruction} {detail_instruction}"""
         }
         
         base_prompt = category_prompts.get(category, category_prompts["General"])
         
-        # Quick summary prompt
-        quick_prompt = f"""{base_prompt}
-        
-        Format your response as a concise bullet-point summary of the main elements in the image.
-        Focus on identification and basic facts. Keep each point under 20 words."""
-        
-        # Detailed description prompt
-        detailed_prompt = f"""{base_prompt}
-        
-        Provide a comprehensive educational analysis covering:
-        1. Detailed identification and description
-        2. Scientific or technical information
-        3. Historical context and significance
-        4. Practical applications and uses
-        5. Interesting connections and relationships
-        
-        Format as clear, study-friendly paragraphs with educational value."""
-        
-        # Fun facts prompt
-        facts_prompt = f"""{base_prompt}
-        
-        Share fascinating, lesser-known facts and trivia about what's shown in the image.
-        Include surprising connections, interesting statistics, cultural significance, or remarkable properties.
-        Make it engaging and memorable for learners."""
-        
         try:
-            # Generate quick summary
-            quick_response = self.model.generate_content([quick_prompt, image])
+            # 1. Quick Summary
+            quick_prompt = f"{base_prompt}\n\nFormat your response as a concise bullet-point summary of the main elements."
+            quick_response = self.model.generate_content([quick_prompt, image], generation_config=generation_config)
             quick_summary = quick_response.text
             
-            # Generate detailed description
-            detailed_response = self.model.generate_content([detailed_prompt, image])
+            # 2. Detailed Description
+            detailed_prompt = f"{base_prompt}\n\nProvide a comprehensive analysis covering identification, technical info, history, and applications."
+            detailed_response = self.model.generate_content([detailed_prompt, image], generation_config=generation_config)
             detailed_description = detailed_response.text
             
-            # Generate fun facts
-            facts_response = self.model.generate_content([facts_prompt, image])
-            fun_facts = facts_response.text
+            # 3. Fun Facts (Conditional)
+            fun_facts = "Fun facts version disabled in settings."
+            if settings.get("include_facts", True):
+                facts_prompt = f"{base_prompt}\n\nShare 3-5 fascinating, lesser-known facts and trivia about what's shown."
+                facts_response = self.model.generate_content([facts_prompt, image], generation_config=generation_config)
+                fun_facts = facts_response.text
             
-            # Extract tags for categorization
+            # Extract tags
             tags = self._extract_tags(quick_summary + " " + detailed_description)
             
             return {
@@ -961,8 +955,38 @@ class VisionaryBookApp:
                 ["English", "Spanish", "French", "German", "Italian", "Portuguese", "Russian", "Japanese", "Korean", "Chinese"],
                 help="Select your preferred language for the analysis"
             )
+
+        # Advanced Settings Toggle
+        settings = {
+            "category": category,
+            "language": language,
+            "detail_level": "Balanced",
+            "tone": "Educational",
+            "temperature": 0.7,
+            "max_tokens": 2048,
+            "include_facts": True
+        }
+
+        with st.expander("🛠️ Advanced AI Settings"):
+            col1, col2 = st.columns(2)
+            with col1:
+                settings["detail_level"] = st.select_slider(
+                    "Detail Level",
+                    options=["Concise", "Balanced", "Comprehensive"],
+                    value="Balanced"
+                )
+                settings["tone"] = st.selectbox(
+                    "Analysis Tone",
+                    ["Educational", "Scientific", "Creative", "Fun"],
+                    index=0
+                )
+            with col2:
+                settings["temperature"] = st.slider("AI Temperature", 0.0, 1.0, 0.7, 0.1, help="Higher values make output more creative")
+                settings["max_tokens"] = st.number_input("Max Output Tokens", 512, 8192, 2048, 512)
+            
+            settings["include_facts"] = st.toggle("Include Fun Facts & Trivia", value=True)
         
-        return category, language
+        return settings
     
     def render_image_preview(self, image_source):
         """Render image preview with enhancements"""
@@ -1536,11 +1560,11 @@ Generated by VisionaryBook - The Image Study Companion
                 st.success("All data cleared!")
                 st.rerun()
     
-    def analyze_image_workflow(self, image: Image.Image, category: str, language: str):
+    def analyze_image_workflow(self, image: Image.Image, settings: Dict):
         """Complete image analysis workflow"""
         with st.spinner("🔍 Analyzing image... This may take a moment."):
             # Perform AI analysis
-            analysis_data = self.ai_engine.analyze_image(image, language, category)
+            analysis_data = self.ai_engine.analyze_image(image, settings)
             
             if analysis_data:
                 # Prepare data for database
@@ -1604,11 +1628,11 @@ Generated by VisionaryBook - The Image Study Companion
                 
                 if processed_image:
                     # Analysis controls
-                    category, language = self.render_analysis_controls()
+                    settings = self.render_analysis_controls()
                     
                     # Analyze button
-                    if st.button("✨ Start Analysis", type="primary", width='stretch'):
-                        success = self.analyze_image_workflow(processed_image, category, language)
+                    if st.button("✨ Start Analysis", type="primary", use_container_width=True):
+                        success = self.analyze_image_workflow(processed_image, settings)
                         if success:
                             st.rerun()
             
