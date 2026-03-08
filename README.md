@@ -447,7 +447,7 @@ This project respectfully builds upon:
 
 ---
 
-<sub>Crafted with precision and botanical inspiration • Xylia © 2024</sub>
+<sub>Crafted with precision and botanical inspiration • Xylia © 2026</sub>
 
 </div>
 
