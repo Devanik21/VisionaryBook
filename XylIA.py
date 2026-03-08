@@ -769,7 +769,7 @@ class AIAnalysisEngine:
         if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
             try:
                 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                self.model = genai.GenerativeModel('gemma-3-27b-it') # I updated this to a more recent model
+                self.model = genai.GenerativeModel('gemini-3.1-flash-lite-preview') # I updated this to a more recent model
             except Exception as e:
                 st.error(f"Error configuring Gemini API: {e}")
                 self.model = None
