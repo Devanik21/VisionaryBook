@@ -67,8 +67,8 @@ def load_custom_css():
     /* Global Variables with Transparency (Glassmorphism) */
     :root {{
         --primary-bg: #0f0f0f;
-        --secondary-bg: rgba(20, 20, 20, 0.85);
-        --accent-bg: rgba(30, 30, 30, 0.7);
+        --secondary-bg: rgba(15, 15, 15, 0.94);
+        --accent-bg: rgba(25, 25, 25, 0.9);
         --hover-bg: rgba(51, 51, 51, 0.9);
         --primary-text: #ffffff;
         --secondary-text: #b3b3b3;
