@@ -419,13 +419,13 @@ def load_custom_css():
     }}
     
     .notification.success {{
-        background: rgba(76, 175, 80, 0.1);
+        background: rgba(179, 136, 255, 0.1);
         border-left-color: var(--accent-text);
         color: var(--accent-text);
     }}
     
     .notification.error {{
-        background: rgba(244, 67, 54, 0.1);
+        background: rgba(255, 82, 82, 0.1);
         border-left-color: var(--danger-color);
         color: var(--danger-color);
     }}
