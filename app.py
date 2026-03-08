@@ -28,7 +28,7 @@ st.set_page_config(
     page_title="VisionaryBook",
     page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Helper for background image
@@ -99,10 +99,10 @@ def load_custom_css():
         background: transparent;
     }}
 
-    /* Hide Streamlit Header/Toolbar (the black box) */
+    /* Make Streamlit Header transparent but functional */
     header, [data-testid="stHeader"] {{
-        visibility: hidden;
-        height: 0px;
+        background: transparent !important;
+        box-shadow: none !important;
     }}
     
     #MainMenu, footer {{
