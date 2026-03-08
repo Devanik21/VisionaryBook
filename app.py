@@ -45,7 +45,7 @@ def load_custom_css():
     # Assuming the user will name it 'background.jpg' or 'background.png'
     bg_file = None
     for ext in ['jpg', 'jpeg', 'png', 'webp']:
-        possible_path = os.path.join(os.getcwd(), f"Aesthetic_2.{ext}")
+        possible_path = os.path.join(os.getcwd(), f"Aesthetic_2 (2).{ext}")
         if os.path.exists(possible_path):
             bg_file = possible_path
             break
