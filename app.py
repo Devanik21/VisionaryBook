@@ -1099,7 +1099,7 @@ class VisionaryBookApp:
         with col1:
             if analysis_data.get('tags'):
                 st.markdown("**🏷️ Tags:**")
-                tags_html = " ".join([f"<span style='background: #4CAF50; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; margin: 0.2rem; display: inline-block;'>{tag}</span>" for tag in analysis_data['tags']])
+                tags_html = " ".join([f"<span style='background: rgba(255,255,255,0.05); color: #eeeeee; padding: 0.2rem 0.7rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); margin: 0.2rem; display: inline-block; font-size: 0.85rem; backdrop-filter: blur(5px);'>{tag}</span>" for tag in analysis_data['tags']])
                 st.markdown(tags_html, unsafe_allow_html=True)
         
         with col2:
