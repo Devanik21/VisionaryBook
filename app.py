@@ -82,6 +82,7 @@ def load_custom_css():
         --warning-color: #ff9800;
         --info-color: #2196f3;
         --glass-blur: blur(15px);
+        --sidebar-blur: blur(3px);
     }}
     
 
@@ -108,8 +109,8 @@ def load_custom_css():
 
     .sidebar-content, .stSidebar {{
         background: var(--secondary-bg) !important;
-        backdrop-filter: var(--glass-blur);
-        -webkit-backdrop-filter: var(--glass-blur);
+        backdrop-filter: var(--sidebar-blur) !important;
+        -webkit-backdrop-filter: var(--sidebar-blur) !important;
         border: 1px solid var(--border-color) !important;
         box-shadow: var(--shadow) !important;
     }}
