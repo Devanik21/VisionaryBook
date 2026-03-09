@@ -1301,7 +1301,7 @@ class XyliaApp:
         
         # === PARADIGM SHIFT FEATURES ===
         st.divider()
-        st.markdown("### ⚛️ Advanced Intelligence Modes")
+        st.markdown("### Advanced Intelligence Modes")
         self.render_fractal_engine(analysis_data, analysis_id)
         self.render_temporal_lens(analysis_data, analysis_id)
         self.render_socratic_mode(analysis_data, analysis_id)
@@ -1320,7 +1320,7 @@ class XyliaApp:
 
     def render_fractal_engine(self, analysis_data: Dict, analysis_id: str):
         """Cognitive Fractal Engine — Multi-scalar depth analysis."""
-        with st.expander("🔬 Cognitive Fractal Engine", expanded=False):
+        with st.expander("Cognitive Fractal Engine", expanded=False):
             st.caption("Shift Xylia's analytical lens across multiple scales of reality — from civilizational context to subatomic inference.")
             
             depth = st.select_slider(
@@ -1339,7 +1339,7 @@ class XyliaApp:
             
             st.info(f"**{depth} Lens:** {depth_descriptions[depth]}")
             
-            if st.button("🔄 Reanalyze at This Depth", key="fractal_analyze_btn", use_container_width=True):
+            if st.button("Reanalyze at This Depth", key="fractal_analyze_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
                 if image and self.ai_engine.model:
                     with st.spinner(f"Xylia is recalibrating to {depth} depth..."):
@@ -1371,10 +1371,10 @@ Provide a completely new, detailed analysis at this specific depth. Do NOT repea
 
     def render_temporal_lens(self, analysis_data: Dict, analysis_id: str):
         """Temporal Causality Graph — 4D Lens: Past, Present, Future."""
-        with st.expander("⏳ Temporal Causality Graph (4D Lens)", expanded=False):
+        with st.expander("Temporal Causality Graph (4D Lens)", expanded=False):
             st.caption("Every image is a frozen moment in a continuous timeline. Xylia reconstructs what came before, what is happening now, and what will come next.")
             
-            if st.button("🕰️ Activate 4D Lens", key="temporal_activate_btn", use_container_width=True):
+            if st.button("Activate 4D Lens", key="temporal_activate_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
                 if image and self.ai_engine.model:
                     with st.spinner("Xylia is reconstructing the timeline..."):
@@ -1416,10 +1416,10 @@ Base each projection on the laws of physics, biology, and entropy. Be vivid and 
 
     def render_socratic_mode(self, analysis_data: Dict, analysis_id: str):
         """Socratic Reversal — Xylia challenges the user with a question about a hidden anomaly."""
-        with st.expander("🔍 Socratic Reversal (Detective Mode)", expanded=False):
+        with st.expander("Socratic Reversal (Detective Mode)", expanded=False):
             st.caption("Xylia has found something hidden in your image. Can you figure out what it is?")
             
-            if st.button("🕵️ Start Deduction", key="socratic_start_btn", use_container_width=True):
+            if st.button("Start Deduction", key="socratic_start_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
                 if image and self.ai_engine.model:
                     with st.spinner("Xylia is scanning for anomalies..."):
@@ -1467,12 +1467,12 @@ Respond in EXACTLY this JSON format (and nothing else):
             # Display the Socratic challenge
             if st.session_state.socratic_question:
                 st.markdown("---")
-                st.markdown(f"**🧠 Xylia's Challenge:**")
+                st.markdown(f"**Xylia's Challenge:**")
                 st.markdown(f"> *{st.session_state.socratic_question}*")
                 
                 # Hints in a collapsible section
                 if st.session_state.socratic_hints:
-                    with st.expander("💡 Need hints?", expanded=False):
+                    with st.expander("Need hints?", expanded=False):
                         for i, hint in enumerate(st.session_state.socratic_hints, 1):
                             st.markdown(f"**Hint {i}:** {hint}")
                 
@@ -1500,14 +1500,14 @@ Evaluate Nik's answer. Be encouraging but honest. If he's close, praise his obse
                                     generation_config={"temperature": 0.7, "max_output_tokens": 1000}
                                 )
                                 st.markdown("---")
-                                st.markdown("**🎯 Xylia's Verdict:**")
+                                st.markdown("**Xylia's Verdict:**")
                                 st.markdown(eval_response.text)
                             except Exception as e:
                                 st.error(f"Evaluation error: {str(e)}")
                 
                 # Reveal answer directly
                 if st.session_state.socratic_answer:
-                    with st.expander("🔓 Reveal Full Answer", expanded=False):
+                    with st.expander("Reveal Full Answer", expanded=False):
                         st.markdown(st.session_state.socratic_answer)
 
     def render_audio_section(self, analysis_data: Dict):
