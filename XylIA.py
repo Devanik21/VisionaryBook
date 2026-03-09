@@ -1079,6 +1079,17 @@ class XyliaApp:
             st.session_state.display_messages = [{"role": "assistant", "content": "Hi Nik, It's the Golden Hour thinking ! "}]
         if 'current_chat_id' not in st.session_state:
             st.session_state.current_chat_id = None
+        # Paradigm Shift Features
+        if 'fractal_depth_result' not in st.session_state:
+            st.session_state.fractal_depth_result = None
+        if 'temporal_result' not in st.session_state:
+            st.session_state.temporal_result = None
+        if 'socratic_question' not in st.session_state:
+            st.session_state.socratic_question = None
+        if 'socratic_hints' not in st.session_state:
+            st.session_state.socratic_hints = None
+        if 'socratic_answer' not in st.session_state:
+            st.session_state.socratic_answer = None
     
     def render_login_screen(self):
         """Render transparent login screen"""
@@ -1287,7 +1298,218 @@ class XyliaApp:
         
         # Action Buttons
         self.render_action_buttons(analysis_data, analysis_id)
+        
+        # === PARADIGM SHIFT FEATURES ===
+        st.divider()
+        st.markdown("### ⚛️ Advanced Intelligence Modes")
+        self.render_fractal_engine(analysis_data, analysis_id)
+        self.render_temporal_lens(analysis_data, analysis_id)
+        self.render_socratic_mode(analysis_data, analysis_id)
     
+    def _get_analysis_image(self, analysis_data: Dict):
+        """Helper to reconstruct a PIL Image from stored analysis data."""
+        if analysis_data.get('image_data'):
+            try:
+                img_bytes = analysis_data['image_data']
+                if isinstance(img_bytes, str):
+                    img_bytes = base64.b64decode(img_bytes)
+                return Image.open(io.BytesIO(img_bytes))
+            except Exception:
+                return None
+        return None
+
+    def render_fractal_engine(self, analysis_data: Dict, analysis_id: str):
+        """Cognitive Fractal Engine — Multi-scalar depth analysis."""
+        with st.expander("🔬 Cognitive Fractal Engine", expanded=False):
+            st.caption("Shift Xylia's analytical lens across multiple scales of reality — from civilizational context to subatomic inference.")
+            
+            depth = st.select_slider(
+                "Observation Depth",
+                options=["Macro", "Meso", "Micro", "Quantum"],
+                value="Meso",
+                key="fractal_depth_slider"
+            )
+            
+            depth_descriptions = {
+                "Macro": "Civilizational, ecological, and historical implications. What does this scene mean for humanity, culture, or the planet?",
+                "Meso": "Standard human-level mechanical, biological, and functional analysis. What is this, how does it work, why does it exist?",
+                "Micro": "Cellular, chemical, and material-science level inference. Analyze the molecular composition, material degradation patterns, crystalline structures, or biological micro-processes that can be inferred from the visual evidence.",
+                "Quantum": "Theoretical physics and fundamental forces. Describe the thermodynamic state, entropy flow, electromagnetic interactions, quantum-level phenomena, and information-theoretic properties underlying this scene."
+            }
+            
+            st.info(f"**{depth} Lens:** {depth_descriptions[depth]}")
+            
+            if st.button("🔄 Reanalyze at This Depth", key="fractal_analyze_btn", use_container_width=True):
+                image = self._get_analysis_image(analysis_data)
+                if image and self.ai_engine.model:
+                    with st.spinner(f"Xylia is recalibrating to {depth} depth..."):
+                        prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant.
+
+You have already performed a standard analysis of this image. Now, re-analyze the SAME image but shift your entire intellectual framework to the following scale of observation:
+
+**Observation Scale: {depth}**
+**Instruction: {depth_descriptions[depth]}**
+
+Previous summary for context: {analysis_data.get('quick_summary', '')[:500]}
+
+Provide a completely new, detailed analysis at this specific depth. Do NOT repeat the standard analysis. Go deep into this specific scale. Use rich, expert-level language appropriate for this depth."""
+
+                        try:
+                            response = self.ai_engine.model.generate_content(
+                                [prompt, image],
+                                generation_config={"temperature": 0.8, "max_output_tokens": 2048}
+                            )
+                            st.session_state.fractal_depth_result = response.text
+                        except Exception as e:
+                            st.error(f"Fractal analysis error: {str(e)}")
+                else:
+                    st.warning("Image data not available for re-analysis.")
+            
+            if st.session_state.fractal_depth_result:
+                st.markdown("---")
+                st.markdown(st.session_state.fractal_depth_result)
+
+    def render_temporal_lens(self, analysis_data: Dict, analysis_id: str):
+        """Temporal Causality Graph — 4D Lens: Past, Present, Future."""
+        with st.expander("⏳ Temporal Causality Graph (4D Lens)", expanded=False):
+            st.caption("Every image is a frozen moment in a continuous timeline. Xylia reconstructs what came before, what is happening now, and what will come next.")
+            
+            if st.button("🕰️ Activate 4D Lens", key="temporal_activate_btn", use_container_width=True):
+                image = self._get_analysis_image(analysis_data)
+                if image and self.ai_engine.model:
+                    with st.spinner("Xylia is reconstructing the timeline..."):
+                        prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant.
+
+Analyze this image as a frozen frame extracted from a continuous physical timeline. Use the visual evidence to reconstruct its causal history and project its future state.
+
+Previous analysis context: {analysis_data.get('quick_summary', '')[:500]}
+
+Respond in EXACTLY this format with three clearly separated sections:
+
+**ANTECEDENT VECTORS (The Past)**
+Describe the exact sequence of physical, biological, historical, or human events that MUST have occurred to produce this exact scene. Be specific — cite observable evidence (shadows, wear patterns, stains, growth stages, architectural styles) as your forensic proof.
+
+**PRESENT DYNAMICS (The Hidden Now)**
+Describe the invisible forces CURRENTLY acting on this scene right now: gravity stress points, atmospheric conditions, biological processes (decay, growth, respiration), thermal gradients, human behavioral dynamics, or electromagnetic interactions that are happening but not immediately obvious.
+
+**FORWARD ENTROPIC PROJECTION (The Future)**
+Project what this exact scene will look like at three timescales:
+- In 10 minutes
+- In 10 days  
+- In 1,000 years
+Base each projection on the laws of physics, biology, and entropy. Be vivid and concrete."""
+
+                        try:
+                            response = self.ai_engine.model.generate_content(
+                                [prompt, image],
+                                generation_config={"temperature": 0.85, "max_output_tokens": 3000}
+                            )
+                            st.session_state.temporal_result = response.text
+                        except Exception as e:
+                            st.error(f"Temporal analysis error: {str(e)}")
+                else:
+                    st.warning("Image data not available for temporal analysis.")
+            
+            if st.session_state.temporal_result:
+                st.markdown("---")
+                st.markdown(st.session_state.temporal_result)
+
+    def render_socratic_mode(self, analysis_data: Dict, analysis_id: str):
+        """Socratic Reversal — Xylia challenges the user with a question about a hidden anomaly."""
+        with st.expander("🔍 Socratic Reversal (Detective Mode)", expanded=False):
+            st.caption("Xylia has found something hidden in your image. Can you figure out what it is?")
+            
+            if st.button("🕵️ Start Deduction", key="socratic_start_btn", use_container_width=True):
+                image = self._get_analysis_image(analysis_data)
+                if image and self.ai_engine.model:
+                    with st.spinner("Xylia is scanning for anomalies..."):
+                        prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant acting as a master detective and educator.
+
+Analyze this image deeply. Find the single MOST fascinating, non-obvious anomaly, hidden pattern, contradiction, or subtle detail that a casual observer would miss.
+
+Previous analysis context: {analysis_data.get('quick_summary', '')[:500]}
+
+Respond in EXACTLY this JSON format (and nothing else):
+{{
+    "question": "A thought-provoking question addressed to Nik (the user) about the anomaly you found. The question should guide Nik to look at a specific part of the image and think critically. Be specific about where to look.",
+    "hints": ["First subtle hint that points toward the answer", "Second hint that narrows it down further", "Third hint that is almost a giveaway"],
+    "answer": "The complete, detailed explanation of the anomaly, why it exists, and what it reveals about the deeper nature of the scene. This is the 'aha' moment."
+}}"""
+
+                        try:
+                            response = self.ai_engine.model.generate_content(
+                                [prompt, image],
+                                generation_config={"temperature": 0.9, "max_output_tokens": 1500}
+                            )
+                            raw = response.text.strip()
+                            # Clean markdown formatting if present
+                            if raw.startswith("```json"):
+                                raw = raw[7:]
+                            if raw.startswith("```"):
+                                raw = raw[3:]
+                            if raw.endswith("```"):
+                                raw = raw[:-3]
+                            
+                            data = json.loads(raw.strip())
+                            st.session_state.socratic_question = data.get("question", "")
+                            st.session_state.socratic_hints = data.get("hints", [])
+                            st.session_state.socratic_answer = data.get("answer", "")
+                        except json.JSONDecodeError:
+                            # Fallback: display raw response as a question
+                            st.session_state.socratic_question = response.text
+                            st.session_state.socratic_hints = []
+                            st.session_state.socratic_answer = "Xylia's analysis is embedded in the question above."
+                        except Exception as e:
+                            st.error(f"Socratic analysis error: {str(e)}")
+                else:
+                    st.warning("Image data not available for Socratic analysis.")
+            
+            # Display the Socratic challenge
+            if st.session_state.socratic_question:
+                st.markdown("---")
+                st.markdown(f"**🧠 Xylia's Challenge:**")
+                st.markdown(f"> *{st.session_state.socratic_question}*")
+                
+                # Hints in a collapsible section
+                if st.session_state.socratic_hints:
+                    with st.expander("💡 Need hints?", expanded=False):
+                        for i, hint in enumerate(st.session_state.socratic_hints, 1):
+                            st.markdown(f"**Hint {i}:** {hint}")
+                
+                # User's hypothesis input
+                user_hypothesis = st.text_input(
+                    "Your hypothesis:", 
+                    placeholder="Type what you think the answer is...",
+                    key="socratic_user_input"
+                )
+                
+                if user_hypothesis and st.button("Submit Hypothesis", key="socratic_submit_btn"):
+                    if self.ai_engine.model:
+                        with st.spinner("Xylia is evaluating your deduction..."):
+                            eval_prompt = f"""You are Xylia. Nik submitted his hypothesis to your detective challenge.
+
+Your original question: {st.session_state.socratic_question}
+The correct answer: {st.session_state.socratic_answer}
+Nik's hypothesis: {user_hypothesis}
+
+Evaluate Nik's answer. Be encouraging but honest. If he's close, praise his observation skills and fill in what he missed. If he's off, gently redirect him toward the truth. Keep it conversational and engaging. End with the full correct explanation."""
+
+                            try:
+                                eval_response = self.ai_engine.model.generate_content(
+                                    eval_prompt,
+                                    generation_config={"temperature": 0.7, "max_output_tokens": 1000}
+                                )
+                                st.markdown("---")
+                                st.markdown("**🎯 Xylia's Verdict:**")
+                                st.markdown(eval_response.text)
+                            except Exception as e:
+                                st.error(f"Evaluation error: {str(e)}")
+                
+                # Reveal answer directly
+                if st.session_state.socratic_answer:
+                    with st.expander("🔓 Reveal Full Answer", expanded=False):
+                        st.markdown(st.session_state.socratic_answer)
+
     def render_audio_section(self, analysis_data: Dict):
         """Render audio generation section"""
         st.markdown("### Audio Explanation")
