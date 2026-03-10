@@ -2770,6 +2770,24 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                         
                         st.session_state.display_messages.append({"role": "assistant", "content": reply})
                         
+                        # Generate and play Transparent TTS
+                        try:
+                            tts = gTTS(text=reply, lang='en', tld='co.uk')
+                            fp = io.BytesIO()
+                            tts.write_to_fp(fp)
+                            fp.seek(0)
+                            b64 = base64.b64encode(fp.read()).decode()
+                            md = f"""
+                                <div class="transparent-audio">
+                                    <audio autoplay="true">
+                                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                                    </audio>
+                                </div>
+                                """
+                            st.markdown(md, unsafe_allow_html=True)
+                        except Exception as e:
+                            print(f"TTS Error in Q&A: {e}")
+                        
                         # Save to memory history
                         st.session_state.chat_history.append({"role": "user", "parts": [prompt]})
                         st.session_state.chat_history.append({"role": "model", "parts": [reply]})
@@ -2891,6 +2909,24 @@ Address Nik gently as your fellow researcher."""
                         st.markdown(reply)
 
                         st.session_state.discovery_messages.append({"role": "assistant", "content": reply})
+                        
+                        # Generate and play Transparent TTS
+                        try:
+                            tts = gTTS(text=reply, lang='en', tld='co.uk')
+                            fp = io.BytesIO()
+                            tts.write_to_fp(fp)
+                            fp.seek(0)
+                            b64Disc = base64.b64encode(fp.read()).decode()
+                            mdDisc = f"""
+                                <div class="transparent-audio">
+                                    <audio autoplay="true">
+                                    <source src="data:audio/mp3;base64,{b64Disc}" type="audio/mp3">
+                                    </audio>
+                                </div>
+                                """
+                            st.markdown(mdDisc, unsafe_allow_html=True)
+                        except Exception as e:
+                            print(f"TTS Error in Discovery: {e}")
 
                         # Save to discovery memory
                         st.session_state.discovery_chat_history.append({"role": "user", "parts": [prompt]})
