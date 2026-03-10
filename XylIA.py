@@ -3281,7 +3281,7 @@ Address Nik gently as your fellow researcher."""
             return
         
         # Check API setup
-        if not self.ai_engine.model:
+        if not getattr(self.ai_engine, 'model_main', None):
             st.error("🚨 Gemini API key not found!")
             st.info("Please add your API key to the `secrets.toml` file and restart the app.")
             st.code("""
