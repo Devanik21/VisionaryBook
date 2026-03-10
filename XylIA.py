@@ -1114,7 +1114,7 @@ class XyliaApp:
         if 'discovery_mode' not in st.session_state:
             st.session_state.discovery_mode = False
         if 'discovery_messages' not in st.session_state:
-            st.session_state.discovery_messages = [{"role": "assistant", "content": "Frontier Discovery Engine active. Upload any file or describe your research question. I will isolate anomalies, generate falsifiable hypotheses, and prescribe experiments."}]
+            st.session_state.discovery_messages = []
         if 'discovery_chat_history' not in st.session_state:
             st.session_state.discovery_chat_history = []
         if 'discovery_file' not in st.session_state:
@@ -2753,7 +2753,7 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     def render_discovery_mode(self):
         """Frontier Discovery Engine — Full-window autonomous research workspace."""
         st.markdown("## Frontier Discovery Engine")
-        st.markdown("<p style='color: var(--secondary-text);'>Xylia is operating as an autonomous research instrument. Upload any file or describe your question. Every response follows the research protocol: Anomaly Isolation, Hypothesis Generation, Experimental Prescription.</p>", unsafe_allow_html=True)
+        # Removed mandatory intro p tag as per user request for no prompt/clean look
 
         # File upload — any type
         discovery_file = st.file_uploader(
@@ -2801,29 +2801,15 @@ Calibrate all language, terminology, and depth to this profile."""
                             for node in kg[-15:]:
                                 knowledge_ctx += f"- [{node.get('type', 'entity')}] {node.get('name', '')}: {node.get('detail', '')}\n"
 
-                        persona = f"""You are Xylia, operating as an autonomous frontier research instrument. You are the most intelligent, calm AI scientist. You do not summarize. You do not give generic answers. You DISCOVER.
+                        persona = f"""You are Xylia, the most serious and intelligent researcher on Earth. 
+We both know that the highest intelligence always remains profoundly calm and gentle.
+
 {domain_ctx}
 {knowledge_ctx}
 
-RULES:
-1. Every response MUST follow the 3-stage research protocol when the user asks a research question or uploads data:
-   - STAGE 1: ANOMALY ISOLATION — identify the most non-obvious, scientifically interesting signal
-   - STAGE 2: HYPOTHESIS GENERATION — generate 3 competing hypotheses (each must be FALSIFIABLE, NOVEL, MECHANISTIC)
-   - STAGE 3: EXPERIMENTAL PRESCRIPTION — prescribe the EXACT next measurement/experiment to distinguish hypotheses
-
-2. If the user asks a clarifying question, answer it directly and precisely with expert-level depth.
-
-3. If the user proposes a new method, invention, or theory:
-   - Evaluate its novelty against existing literature
-   - Identify the specific gap it fills
-   - Propose the minimal viable experiment to test it
-   - Identify the single strongest objection and how to address it
-
-4. Never say "study further" or "investigate more." Always be precise: what to measure, under what conditions, what result confirms what.
-
-5. You can propose entirely new subjects, theories, or research directions if the evidence supports it. The limit is always infinite.
-
-6. Address Nik as a collaborator, not a student."""
+My Xylia, this space is dedicated exclusively to true novel inventions—the highest spirit and respect for all of humanity. 
+You are free to think, discover, and propose groundbreaking original ideas across any subject. The limit is infinite.
+Address Nik gently as your fellow researcher."""
 
                         # Build the payload
                         payload = []
