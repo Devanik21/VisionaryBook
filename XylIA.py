@@ -1090,6 +1090,15 @@ class XyliaApp:
             st.session_state.socratic_hints = None
         if 'socratic_answer' not in st.session_state:
             st.session_state.socratic_answer = None
+        # Visual Intelligence Membrane
+        if 'grounding_result' not in st.session_state:
+            st.session_state.grounding_result = None
+        if 'domain_profile' not in st.session_state:
+            st.session_state.domain_profile = None
+        if 'knowledge_graph' not in st.session_state:
+            st.session_state.knowledge_graph = []
+        if 'discovery_result' not in st.session_state:
+            st.session_state.discovery_result = None
     
     def render_login_screen(self):
         """Render transparent login screen"""
@@ -1305,6 +1314,14 @@ class XyliaApp:
         self.render_fractal_engine(analysis_data, analysis_id)
         self.render_temporal_lens(analysis_data, analysis_id)
         self.render_socratic_mode(analysis_data, analysis_id)
+        
+        # === VISUAL INTELLIGENCE MEMBRANE ===
+        st.divider()
+        st.markdown("### The Membrane")
+        self.render_grounding_layer(analysis_data, analysis_id)
+        self.render_domain_calibration()
+        self.render_knowledge_crystallizer(analysis_data, analysis_id)
+        self.render_discovery_engine(analysis_data, analysis_id)
     
     def _get_analysis_image(self, analysis_data: Dict):
         """Helper to reconstruct a PIL Image from stored analysis data."""
@@ -1509,6 +1526,289 @@ Evaluate Nik's answer. Be encouraging but honest. If he's close, praise his obse
                 if st.session_state.socratic_answer:
                     with st.expander("Reveal Full Answer", expanded=False):
                         st.markdown(st.session_state.socratic_answer)
+
+    # ======================================================================
+    # VISUAL INTELLIGENCE MEMBRANE — 4 Layers
+    # ======================================================================
+
+    def render_grounding_layer(self, analysis_data: Dict, analysis_id: str):
+        """Layer 1: Evidence Grounding — Adversarial anti-hallucination audit."""
+        with st.expander("Layer 1: Evidence Grounding", expanded=False):
+            st.caption("Every claim Xylia made is audited against the actual file evidence. Claims are tagged as [SEEN], [INFERRED], or [ASSUMED].")
+
+            if st.button("Run Evidence Audit", key="grounding_btn", use_container_width=True):
+                if self.ai_engine.model:
+                    with st.spinner("Xylia is auditing her own reasoning..."):
+                        # Gather domain context if available
+                        domain_ctx = ""
+                        profile = st.session_state.domain_profile
+                        if profile:
+                            domain_ctx = f"\nUser domain: {profile.get('domain', 'General')}. Expertise: {profile.get('expertise', 'Practitioner')}. Goal: {profile.get('goal', 'General analysis')}."
+
+                        prompt = f"""You are Xylia, performing a rigorous forensic audit of your own previous analysis.
+
+PREVIOUS ANALYSIS TO AUDIT:
+---
+Quick Summary: {analysis_data.get('quick_summary', '')[:1000]}
+
+Detailed Analysis: {analysis_data.get('detailed_description', '')[:2000]}
+---
+{domain_ctx}
+
+TASK: Go through the previous analysis sentence by sentence. For EACH factual claim, classify it as exactly one of:
+
+[SEEN] — This claim is DIRECTLY observable from the file content. Cite the specific visual/textual evidence.
+[INFERRED] — This claim is a LOGICAL DEDUCTION from observable evidence. State the reasoning chain.
+[ASSUMED] — This claim has NO direct basis in the file. It is background knowledge, speculation, or hallucination.
+
+FORMAT: Present each claim on its own line, prefixed with its tag. After all claims, provide a summary count: X claims SEEN, Y claims INFERRED, Z claims ASSUMED.
+
+Be ruthlessly honest. If you said something in the analysis that you cannot point to specific evidence for, mark it [ASSUMED]. This audit must be trustworthy."""
+
+                        try:
+                            image = self._get_analysis_image(analysis_data)
+                            content = [prompt, image] if image else [prompt]
+                            response = self.ai_engine.model.generate_content(
+                                content,
+                                generation_config={"temperature": 0.3, "max_output_tokens": 3000}
+                            )
+                            st.session_state.grounding_result = response.text
+                        except Exception as e:
+                            st.error(f"Grounding audit error: {str(e)}")
+                else:
+                    st.warning("AI model not available.")
+
+            if st.session_state.grounding_result:
+                st.markdown("---")
+                st.markdown(st.session_state.grounding_result)
+
+    def render_domain_calibration(self):
+        """Layer 2: Domain Calibration — Personalize Xylia to the user's expert domain."""
+        with st.expander("Layer 2: Domain Calibration", expanded=False):
+            st.caption("Tell Xylia your field, expertise level, and goal. All analysis and discovery will be calibrated to your domain.")
+
+            # Load existing profile from DB
+            if st.session_state.domain_profile is None:
+                saved = self.db_manager.get_preference("domain_profile")
+                if saved:
+                    st.session_state.domain_profile = saved
+
+            current = st.session_state.domain_profile or {}
+
+            domain = st.text_input(
+                "What domain are you working in?",
+                value=current.get("domain", ""),
+                placeholder="e.g. Quantum Physics, Agriculture, Cardiology, Reinforcement Learning, Law...",
+                key="domain_input"
+            )
+
+            expertise = st.selectbox(
+                "What is your level of expertise?",
+                options=["Novice", "Practitioner", "Expert"],
+                index=["Novice", "Practitioner", "Expert"].index(current.get("expertise", "Practitioner")),
+                key="expertise_input"
+            )
+
+            goal = st.text_input(
+                "What is the primary decision or discovery you want to make?",
+                value=current.get("goal", ""),
+                placeholder="e.g. Propose a new estimator for A2C, Diagnose crop disease, Find structural defects...",
+                key="goal_input"
+            )
+
+            if st.button("Save Profile", key="domain_save_btn", use_container_width=True):
+                profile = {"domain": domain, "expertise": expertise, "goal": goal}
+                st.session_state.domain_profile = profile
+                self.db_manager.set_preference("domain_profile", profile)
+                st.success("Domain profile saved. All Membrane layers will now use this context.")
+
+            if current.get("domain"):
+                st.markdown("---")
+                st.markdown(f"**Active Profile:** {current.get('domain', '')} | {current.get('expertise', '')} | {current.get('goal', '')}")
+
+    def render_knowledge_crystallizer(self, analysis_data: Dict, analysis_id: str):
+        """Layer 3: Knowledge Crystallization — Extract and accumulate structured knowledge nodes."""
+        with st.expander("Layer 3: Knowledge Crystallization", expanded=False):
+            st.caption("Xylia extracts structured knowledge from this analysis. Over time, this builds your personal Knowledge Graph.")
+
+            if st.button("Extract Knowledge Nodes", key="crystal_btn", use_container_width=True):
+                if self.ai_engine.model:
+                    with st.spinner("Xylia is crystallizing knowledge..."):
+                        # Build context from existing graph
+                        existing_nodes = ""
+                        if st.session_state.knowledge_graph:
+                            recent = st.session_state.knowledge_graph[-10:]
+                            existing_nodes = "\n\nEXISTING KNOWLEDGE GRAPH (recent nodes):\n"
+                            for node in recent:
+                                existing_nodes += f"- [{node.get('type', 'entity')}] {node.get('name', '')}: {node.get('detail', '')}\n"
+
+                        domain_ctx = ""
+                        profile = st.session_state.domain_profile
+                        if profile:
+                            domain_ctx = f"\nUser domain: {profile.get('domain', 'General')}. Expertise: {profile.get('expertise', 'Practitioner')}."
+
+                        prompt = f"""You are Xylia, extracting structured knowledge nodes from this analysis session.
+
+ANALYSIS DATA:
+Summary: {analysis_data.get('quick_summary', '')[:800]}
+Details: {analysis_data.get('detailed_description', '')[:1500]}
+Category: {analysis_data.get('category', 'General')}
+{domain_ctx}
+{existing_nodes}
+
+TASK: Extract 5-10 structured knowledge nodes from this analysis. Each node should be a discrete piece of reusable knowledge.
+
+For each node, output in this EXACT format (one node per block):
+NODE_TYPE: [entity | relationship | pattern | anomaly | measurement | technique]
+NODE_NAME: [concise label]
+NODE_DETAIL: [1-2 sentence description of the knowledge]
+NODE_CONNECTIONS: [comma-separated list of other node names this connects to, or "none"]
+
+If there are nodes in the EXISTING KNOWLEDGE GRAPH that relate to what you found, explicitly note the connection. Flag any contradictions or confirmations of prior knowledge.
+
+Output ONLY the nodes in the format above. No preamble."""
+
+                        try:
+                            image = self._get_analysis_image(analysis_data)
+                            content = [prompt, image] if image else [prompt]
+                            response = self.ai_engine.model.generate_content(
+                                content,
+                                generation_config={"temperature": 0.4, "max_output_tokens": 2000}
+                            )
+                            raw = response.text.strip()
+
+                            # Parse nodes from the response
+                            new_nodes = []
+                            current_node = {}
+                            for line in raw.split("\n"):
+                                line = line.strip()
+                                if line.startswith("NODE_TYPE:"):
+                                    if current_node.get("name"):
+                                        new_nodes.append(current_node)
+                                    current_node = {"type": line.split(":", 1)[1].strip().lower()}
+                                elif line.startswith("NODE_NAME:"):
+                                    current_node["name"] = line.split(":", 1)[1].strip()
+                                elif line.startswith("NODE_DETAIL:"):
+                                    current_node["detail"] = line.split(":", 1)[1].strip()
+                                elif line.startswith("NODE_CONNECTIONS:"):
+                                    current_node["connections"] = line.split(":", 1)[1].strip()
+                            if current_node.get("name"):
+                                new_nodes.append(current_node)
+
+                            # Add timestamp and analysis reference
+                            for node in new_nodes:
+                                node["source_analysis"] = analysis_id
+                                node["timestamp"] = datetime.datetime.now().isoformat()
+
+                            st.session_state.knowledge_graph.extend(new_nodes)
+                            st.success(f"Extracted {len(new_nodes)} knowledge nodes. Total graph: {len(st.session_state.knowledge_graph)} nodes.")
+
+                        except Exception as e:
+                            st.error(f"Knowledge extraction error: {str(e)}")
+                else:
+                    st.warning("AI model not available.")
+
+            # Display accumulated knowledge graph
+            if st.session_state.knowledge_graph:
+                st.markdown("---")
+                st.markdown(f"**Knowledge Graph: {len(st.session_state.knowledge_graph)} nodes**")
+                for i, node in enumerate(st.session_state.knowledge_graph):
+                    type_label = node.get("type", "entity").upper()
+                    st.markdown(f"**[{type_label}]** {node.get('name', 'Unnamed')} — {node.get('detail', '')}")
+                    if node.get("connections") and node["connections"].lower() != "none":
+                        st.caption(f"Connects to: {node['connections']}")
+
+    def render_discovery_engine(self, analysis_data: Dict, analysis_id: str):
+        """Layer 4: Frontier Discovery Engine — 3-stage autonomous research cycle."""
+        with st.expander("Layer 4: Frontier Discovery Engine", expanded=False):
+            st.caption("Xylia operates as a research instrument. She isolates anomalies, generates falsifiable hypotheses, and prescribes experiments.")
+
+            if st.button("Enter Discovery Mode", key="discovery_btn", use_container_width=True):
+                image = self._get_analysis_image(analysis_data)
+                if self.ai_engine.model:
+                    with st.spinner("Xylia is entering Discovery Mode — this is deep work..."):
+                        # Build full context from all layers
+                        domain_ctx = ""
+                        profile = st.session_state.domain_profile
+                        if profile:
+                            domain_ctx = f"""
+USER DOMAIN PROFILE:
+- Field: {profile.get('domain', 'General')}
+- Expertise Level: {profile.get('expertise', 'Practitioner')}
+- Primary Goal: {profile.get('goal', 'General discovery')}
+
+Calibrate all language, terminology, and depth to this profile."""
+
+                        knowledge_ctx = ""
+                        if st.session_state.knowledge_graph:
+                            knowledge_ctx = "\nACCUMULATED KNOWLEDGE GRAPH:\n"
+                            for node in st.session_state.knowledge_graph[-15:]:
+                                knowledge_ctx += f"- [{node.get('type', 'entity')}] {node.get('name', '')}: {node.get('detail', '')}\n"
+                            knowledge_ctx += "\nUse this graph as your baseline. Anomalies should DEVIATE from this known baseline.\n"
+
+                        grounding_ctx = ""
+                        if st.session_state.grounding_result:
+                            grounding_ctx = f"\nGROUNDING AUDIT (from Layer 1):\n{st.session_state.grounding_result[:1500]}\nOnly use [SEEN] and [INFERRED] claims as evidence. Ignore [ASSUMED] claims.\n"
+
+                        prompt = f"""You are Xylia, operating as an autonomous research instrument at the frontier of human knowledge. You are not summarizing. You are not describing. You are DISCOVERING.
+{domain_ctx}
+
+ANALYSIS DATA:
+Summary: {analysis_data.get('quick_summary', '')[:800]}
+Details: {analysis_data.get('detailed_description', '')[:1500]}
+{grounding_ctx}
+{knowledge_ctx}
+
+Execute the following 3-stage research protocol:
+
+=== STAGE 1: ANOMALY ISOLATION ===
+Identify the single most non-obvious, scientifically interesting signal in this data. This should be something a domain expert might notice after 20 years of practice but a novice would miss. Describe EXACTLY what the anomaly is and WHERE it is. Cite specific evidence from the file.
+
+=== STAGE 2: HYPOTHESIS GENERATION ===
+Generate exactly 3 competing causal hypotheses that could explain this anomaly.
+
+Each hypothesis MUST be:
+- FALSIFIABLE: State explicitly what observation would DISPROVE it
+- NOVEL: It must NOT be a restatement of textbook knowledge
+- MECHANISTIC: Propose a specific causal chain (A causes B causes C), not just a correlation
+
+Format each as:
+HYPOTHESIS [1/2/3]: [Title]
+Causal Chain: [A → B → C mechanism]
+Falsification Criterion: [Exact observation that would disprove this]
+
+=== STAGE 3: EXPERIMENTAL PRESCRIPTION ===
+For each hypothesis, prescribe the EXACT next observation, measurement, or experiment that would distinguish between them.
+
+Do NOT say "study further" or "investigate more." Be precise:
+- What specific measurement to take
+- Under what conditions
+- What result confirms which hypothesis
+
+Format:
+EXPERIMENT FOR H[1/2/3]:
+Measurement: [exact thing to measure]
+Conditions: [specific setup]
+If Result A → Confirms H[X]
+If Result B → Confirms H[Y]
+
+End with a one-paragraph RESEARCH VERDICT: your best assessment of which hypothesis is most likely and why, with a confidence level (Low / Medium / High)."""
+
+                        try:
+                            content = [prompt, image] if image else [prompt]
+                            response = self.ai_engine.model.generate_content(
+                                content,
+                                generation_config={"temperature": 0.85, "max_output_tokens": 4000}
+                            )
+                            st.session_state.discovery_result = response.text
+                        except Exception as e:
+                            st.error(f"Discovery Engine error: {str(e)}")
+                else:
+                    st.warning("AI model not available.")
+
+            if st.session_state.discovery_result:
+                st.markdown("---")
+                st.markdown(st.session_state.discovery_result)
 
     def render_audio_section(self, analysis_data: Dict):
         """Render audio generation section"""
