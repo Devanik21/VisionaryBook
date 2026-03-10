@@ -437,7 +437,7 @@ Xylia supports multiple learning paradigms:
 
 <div align="center">
 
-## 🙏 **Acknowledgments**
+## **Acknowledgments**
 
 This project respectfully builds upon:
 - Google Generative AI (Gemini Vision)
