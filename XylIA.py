@@ -11,6 +11,7 @@ from gtts import gTTS
 import tempfile
 import os
 import re
+import zipfile
 from typing import Dict, List, Optional, Tuple
 import threading
 import time
@@ -2477,9 +2478,131 @@ Analysis ID: {analysis_id}
         st.session_state.show_flashcard_back = False
         st.rerun()
     
+    def export_workspace_zip(self) -> bytes:
+        """Export entire Xylia workspace as a ZIP archive containing JSON files.
+        Captures all TinyDB databases and all serializable session state.
+        This is the master persistence mechanism for years-long research continuity."""
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # 1. All TinyDB databases
+            zf.writestr('db_analyses.json', json.dumps(self.db_manager.analyses_db.all(), indent=2, default=str))
+            zf.writestr('db_flashcards.json', json.dumps(self.db_manager.flashcards_db.all(), indent=2, default=str))
+            zf.writestr('db_sessions.json', json.dumps(self.db_manager.sessions_db.all(), indent=2, default=str))
+            zf.writestr('db_preferences.json', json.dumps(self.db_manager.preferences_db.all(), indent=2, default=str))
+            
+            # 2. Session state snapshot — capture every serializable key
+            session_snapshot = {}
+            serializable_keys = [
+                'display_messages', 'chat_history', 'current_chat_id',
+                'discovery_messages', 'discovery_chat_history', 'current_discovery_id',
+                'fractal_depth_result', 'temporal_result',
+                'socratic_question', 'socratic_hints', 'socratic_answer',
+                'grounding_result', 'domain_profile', 'knowledge_graph',
+                'discovery_result',
+            ]
+            for key in serializable_keys:
+                val = st.session_state.get(key)
+                if val is not None:
+                    session_snapshot[key] = val
+            
+            # Sanitize chat_history parts (may contain PIL Images)
+            for hist_key in ['chat_history', 'discovery_chat_history']:
+                if hist_key in session_snapshot:
+                    sanitized = []
+                    for m in session_snapshot[hist_key]:
+                        new_m = {"role": m["role"], "parts": []}
+                        for part in m.get("parts", []):
+                            if isinstance(part, str):
+                                new_m["parts"].append(part)
+                            else:
+                                new_m["parts"].append("[Multimodal Content]")
+                        sanitized.append(new_m)
+                    session_snapshot[hist_key] = sanitized
+            
+            zf.writestr('session_state.json', json.dumps(session_snapshot, indent=2, default=str))
+            
+            # 3. Metadata
+            meta = {
+                'exported_at': datetime.datetime.now().isoformat(),
+                'version': '1.0',
+                'app': 'Xylia',
+                'stats': self.db_manager.get_statistics()
+            }
+            zf.writestr('meta.json', json.dumps(meta, indent=2))
+        
+        buf.seek(0)
+        return buf.read()
+    
+    def import_workspace_zip(self, zip_bytes: bytes) -> bool:
+        """Import a previously exported ZIP archive, restoring the entire workspace.
+        Truncates existing data and replaces it with the archive contents."""
+        try:
+            buf = io.BytesIO(zip_bytes)
+            with zipfile.ZipFile(buf, 'r') as zf:
+                names = zf.namelist()
+                
+                # Validate the ZIP has the expected structure
+                required = ['db_analyses.json', 'db_sessions.json', 'session_state.json', 'meta.json']
+                for req in required:
+                    if req not in names:
+                        st.error(f"Invalid archive: missing {req}")
+                        return False
+                
+                # 1. Restore TinyDB databases
+                db_map = {
+                    'db_analyses.json': self.db_manager.analyses_db,
+                    'db_flashcards.json': self.db_manager.flashcards_db,
+                    'db_sessions.json': self.db_manager.sessions_db,
+                    'db_preferences.json': self.db_manager.preferences_db,
+                }
+                for filename, db in db_map.items():
+                    if filename in names:
+                        records = json.loads(zf.read(filename).decode('utf-8'))
+                        db.truncate()  # Wipe existing data
+                        for record in records:
+                            db.insert(record)
+                
+                # 2. Restore session state
+                if 'session_state.json' in names:
+                    session_data = json.loads(zf.read('session_state.json').decode('utf-8'))
+                    for key, value in session_data.items():
+                        st.session_state[key] = value
+                
+                return True
+        except Exception as e:
+            st.error(f"Restore failed: {str(e)}")
+            return False
+
     def render_history_sidebar(self):
         """Render analysis history in sidebar"""
         with st.sidebar:
+            # === Master ZIP Persistence ===
+            st.markdown('<div class="sidebar-header">🗂️ Workspace Vault</div>', unsafe_allow_html=True)
+            zip_col1, zip_col2 = st.columns(2)
+            with zip_col1:
+                zip_data = self.export_workspace_zip()
+                timestamp = datetime.datetime.now().strftime('%Y%m%d')
+                st.download_button(
+                    "⬇ Download",
+                    data=zip_data,
+                    file_name=f"xylia_workspace_{timestamp}.zip",
+                    mime="application/zip",
+                    key="master_zip_download",
+                    use_container_width=True,
+                    help="Download entire workspace as a ZIP. Restore anytime, even after years."
+                )
+            with zip_col2:
+                zip_upload = st.file_uploader("Upload", type=["zip"], key="master_zip_upload", label_visibility="collapsed")
+                if zip_upload is not None:
+                    if st.button("⬆ Restore", key="master_zip_restore", use_container_width=True, help="Restore workspace from ZIP"):
+                        with st.spinner("Restoring workspace..."):
+                            success = self.import_workspace_zip(zip_upload.read())
+                            if success:
+                                st.success("Workspace restored!")
+                                st.rerun()
+            
+            st.markdown("---")
+            
             st.markdown('<div class="sidebar-header"> Quick Actions</div>', unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
