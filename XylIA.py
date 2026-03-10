@@ -233,31 +233,20 @@ def load_custom_css():
         gap: 0.5rem;
     }}
     
-    /* Standard Audio Player - 90% Transparent but Detectable */
-    .transparent-audio {
-        display: flex;
-        justify-content: flex-start;
-        margin-top: 8px;
-        opacity: 0.15;
-        transition: all 0.3s ease;
-        background: rgba(255, 255, 255, 0.03);
-        padding: 4px 10px;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        width: fit-content;
-    }
-    
-    .transparent-audio:hover {
-        opacity: 0.6;
-        background: rgba(255, 255, 255, 0.08);
-        border-color: var(--accent-text);
-    }
-
-    .transparent-audio audio {
-        height: 28px;
-        width: 220px;
+    /* Standard Audio Player - 90% Transparent */
+    .transparent-audio audio {{
+        opacity: 0.1;
+        height: 36px;
+        width: 100%;
+        max-width: 400px;
         outline: none;
-    }
+        transition: opacity 0.3s ease;
+        margin-top: 10px;
+    }}
+    
+    .transparent-audio audio:hover {{
+        opacity: 0.4;
+    }}
     
     .section-content {{
         color: var(--secondary-text);
@@ -1161,10 +1150,6 @@ class XyliaApp:
             st.session_state.current_discovery_id = None
         if 'discovery_file' not in st.session_state:
             st.session_state.discovery_file = None
-        if 'last_msg_audio_played' not in st.session_state:
-            st.session_state.last_msg_audio_played = -1
-        if 'last_disc_audio_played' not in st.session_state:
-            st.session_state.last_disc_audio_played = -1
     
     def render_login_screen(self):
         """Render transparent login screen"""
@@ -2732,23 +2717,9 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         st.markdown("---")
         
         # Display existing chat messages
-        for i, msg in enumerate(st.session_state.display_messages):
+        for msg in st.session_state.display_messages:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
-                if msg.get("audio"):
-                    # Only autoplay the absolute last message if it's new
-                    is_last = (i == len(st.session_state.display_messages) - 1)
-                    autoplay_attr = 'autoplay="true"' if (is_last and st.session_state.get('last_msg_audio_played') != i) else ""
-                    if is_last: st.session_state.last_msg_audio_played = i
-                    
-                    audio_html = f"""
-                        <div class="transparent-audio">
-                            <audio {autoplay_attr} controls>
-                                <source src="data:audio/mp3;base64,{msg['audio']}" type="audio/mp3">
-                            </audio>
-                        </div>
-                    """
-                    st.markdown(audio_html, unsafe_allow_html=True)
                 
         # Chat input
         if prompt := st.chat_input("Ask Xylia anything..."):
@@ -2812,25 +2783,29 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                         reply = response.text
                         st.markdown(reply)
                         
-                        # Generate TTS
-                        b64 = ""
+                        st.session_state.display_messages.append({"role": "assistant", "content": reply})
+                        
+                        # Generate and play Transparent TTS
                         try:
                             tts = gTTS(text=reply, lang='en', tld='co.uk')
                             fp = io.BytesIO()
                             tts.write_to_fp(fp)
                             fp.seek(0)
                             b64 = base64.b64encode(fp.read()).decode()
+                            md = f"""
+                                <div class="transparent-audio">
+                                    <audio autoplay="true">
+                                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                                    </audio>
+                                </div>
+                                """
+                            st.markdown(md, unsafe_allow_html=True)
                         except Exception as e:
                             print(f"TTS Error in Q&A: {e}")
-                            
-                        st.session_state.display_messages.append({"role": "assistant", "content": reply, "audio": b64})
                         
                         # Save to memory history
                         st.session_state.chat_history.append({"role": "user", "parts": [prompt]})
                         st.session_state.chat_history.append({"role": "model", "parts": [reply]})
-                        
-                        # Trigger rerun to show audio in the loop with autoplay
-                        st.rerun()
                         
                         # Update current session ID if it's a new chat
                         if not st.session_state.current_chat_id:
@@ -2866,23 +2841,9 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         st.markdown("---")
 
         # Display existing discovery messages
-        for i, msg in enumerate(st.session_state.discovery_messages):
+        for msg in st.session_state.discovery_messages:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
-                if msg.get("audio"):
-                    # Only autoplay the absolute last message if it's new
-                    is_last = (i == len(st.session_state.discovery_messages) - 1)
-                    autoplay_attr = 'autoplay="true"' if (is_last and st.session_state.get('last_disc_audio_played') != i) else ""
-                    if is_last: st.session_state.last_disc_audio_played = i
-                    
-                    audio_html = f"""
-                        <div class="transparent-audio">
-                            <audio {autoplay_attr} controls>
-                                <source src="data:audio/mp3;base64,{msg['audio']}" type="audio/mp3">
-                            </audio>
-                        </div>
-                    """
-                    st.markdown(audio_html, unsafe_allow_html=True)
 
         # Chat input
         if prompt := st.chat_input("Describe your research question, hypothesis, or upload a file..."):
@@ -2961,20 +2922,27 @@ Address Nik gently as your fellow researcher."""
                         )
                         reply = response.text
                         st.markdown(reply)
+
+                        st.session_state.discovery_messages.append({"role": "assistant", "content": reply})
                         
-                        # Generate TTS
-                        b64Disc = ""
+                        # Generate and play Transparent TTS
                         try:
                             tts = gTTS(text=reply, lang='en', tld='co.uk')
                             fp = io.BytesIO()
                             tts.write_to_fp(fp)
                             fp.seek(0)
                             b64Disc = base64.b64encode(fp.read()).decode()
+                            mdDisc = f"""
+                                <div class="transparent-audio">
+                                    <audio autoplay="true">
+                                    <source src="data:audio/mp3;base64,{b64Disc}" type="audio/mp3">
+                                    </audio>
+                                </div>
+                                """
+                            st.markdown(mdDisc, unsafe_allow_html=True)
                         except Exception as e:
                             print(f"TTS Error in Discovery: {e}")
 
-                        st.session_state.discovery_messages.append({"role": "assistant", "content": reply, "audio": b64Disc})
-                        
                         # Save to discovery memory
                         st.session_state.discovery_chat_history.append({"role": "user", "parts": [prompt]})
                         st.session_state.discovery_chat_history.append({"role": "model", "parts": [reply]})
@@ -3010,9 +2978,6 @@ Address Nik gently as your fellow researcher."""
                         }
                         
                         self.db_manager.sessions_db.upsert(disc_record, self.db_manager.query.id == st.session_state.current_discovery_id)
-                        
-                        # Trigger rerun to show audio in the loop with autoplay
-                        st.rerun()
 
                     except Exception as e:
                         st.error(f"Discovery Engine error: {str(e)}")
