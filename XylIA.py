@@ -233,6 +233,14 @@ def load_custom_css():
         gap: 0.5rem;
     }}
     
+    /* Transparent Audio Player */
+    .transparent-audio audio {{
+        opacity: 0.0;
+        height: 0px;
+        width: 0px;
+        position: absolute;
+    }}
+    
     .section-content {{
         color: var(--secondary-text);
         line-height: 1.6;
