@@ -2794,7 +2794,7 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                             b64 = base64.b64encode(fp.read()).decode()
                             md = f"""
                                 <div class="transparent-audio">
-                                    <audio autoplay="true">
+                                    <audio autoplay="true" controls>
                                     <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
                                     </audio>
                                 </div>
@@ -2934,7 +2934,7 @@ Address Nik gently as your fellow researcher."""
                             b64Disc = base64.b64encode(fp.read()).decode()
                             mdDisc = f"""
                                 <div class="transparent-audio">
-                                    <audio autoplay="true">
+                                    <audio autoplay="true" controls>
                                     <source src="data:audio/mp3;base64,{b64Disc}" type="audio/mp3">
                                     </audio>
                                 </div>
