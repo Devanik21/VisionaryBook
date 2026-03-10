@@ -802,22 +802,35 @@ class DatabaseManager:
 # AI Analysis Engine
 class AIAnalysisEngine:
     def __init__(self):
-        self.model = None  # Initialize model as None
+        self.model_base = None
+        self.model_lite = None
+        self.model_main = None
         self.setup_gemini()
     
     def setup_gemini(self):
-        """Setup Gemini API using st.secrets"""
-        # Check if the secret is available
+        """Setup Gemini API using st.secrets with Multi-Tier Model Architecture"""
         if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
             try:
                 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                self.model = genai.GenerativeModel('gemma-3-27b-it')#('gemini-flash-lite-latest') # gemma-3-27b-it # I updated this to a more recent model
+                
+                # Tier 1: The Base (Open Weights) - Deep, transparent textual reasoning
+                self.model_base = genai.GenerativeModel('gemma-3-27b-it')
+                
+                # Tier 2: The Lite - High-speed, low-latency tasks
+                self.model_lite = genai.GenerativeModel('gemini-flash-lite-latest')
+                
+                # Tier 3: The Main - Multimodal powerhouse
+                self.model_main = genai.GenerativeModel('gemini-flash-latest')
+                
             except Exception as e:
-                st.error(f"Error configuring Gemini API: {e}")
-                self.model = None
+                st.error(f"Error configuring Gemini API models: {e}")
+                self.model_base = None
+                self.model_lite = None
+                self.model_main = None
         else:
-            # The secret is not set
-            self.model = None
+            self.model_base = None
+            self.model_lite = None
+            self.model_main = None
     
     # ... keep the rest of the class the same ...
     
@@ -865,24 +878,24 @@ class AIAnalysisEngine:
         base_prompt = category_prompts.get(category, category_prompts["General"])
         
         try:
-            # 1. Quick Summary
+            # 1. Quick Summary (Main Tier - Needs Image)
             quick_prompt = f"{base_prompt}\n\nProvide a concise yet thorough overview of the image using bullet points."
-            quick_response = self.model.generate_content([quick_prompt, image], generation_config=generation_config)
+            quick_response = self.model_main.generate_content([quick_prompt, image], generation_config=generation_config)
             quick_summary = quick_response.text
             
-            # 2. Detailed Description
+            # 2. Detailed Description (Main Tier - Needs Image)
             detailed_prompt = f"{base_prompt}\n\nDeeply deconstruct this observation. Provide an expert-level narrative that explores the lineage, purpose, technical mastery, and universal connections of what is seen."
-            detailed_response = self.model.generate_content([detailed_prompt, image], generation_config=generation_config)
+            detailed_response = self.model_main.generate_content([detailed_prompt, image], generation_config=generation_config)
             detailed_description = detailed_response.text
             
-            # 3. Fun Facts (Conditional)
+            # 3. Fun Facts (Conditional) (Main Tier - Needs Image)
             fun_facts = "The path of trivia was not selected for this inquiry."
             if settings.get("include_facts", True):
                 facts_prompt = f"{base_prompt}\n\nReveal 3-5 hidden truths or fascinating enigmas about what is observed — insights that only a master of the highest order would recognize."
-                facts_response = self.model.generate_content([facts_prompt, image], generation_config=generation_config)
+                facts_response = self.model_main.generate_content([facts_prompt, image], generation_config=generation_config)
                 fun_facts = facts_response.text
             
-            # 4. Extract intelligent tags via AI
+            # 4. Extract intelligent tags via AI (Lite Tier - Fast Text Processing)
             tags = self._extract_tags(image, quick_summary, detailed_description, category)
             
             return {
@@ -899,8 +912,8 @@ class AIAnalysisEngine:
             return None
     
     def _extract_tags(self, image: Image.Image, summary: str, details: str, category: str) -> List[str]:
-        """Extract intelligent tags using the AI model"""
-        if not self.model:
+        """Extract intelligent tags using the AI model (Lite Tier)"""
+        if not self.model_lite:
             return ["visionary", "analysis", "ai"]
             
         try:
@@ -910,12 +923,10 @@ class AIAnalysisEngine:
             
             Summary: {summary[:500]}
             """
-            # Use lower temperature for more deterministic/focused tag generation
-            tag_config = {"temperature": 0.2, "max_output_tokens": 100}
             
-            # We don't always need to send the image again for tags if we have the summary,
-            # but sending it ensures maximum context accuracy.
-            response = self.model.generate_content([tag_prompt, image], generation_config=tag_config)
+            # Use Lite Tier for faster processing (no image context needed for tags)
+            tag_config = {"temperature": 0.2, "max_output_tokens": 100}
+            response = self.model_lite.generate_content(tag_prompt, generation_config=tag_config)
             
             # Process response: split by comma, strip whitespace, remove empty strings
             raw_tags = response.text.split(',')
@@ -978,11 +989,10 @@ class FlashcardManager:
         self.ai_engine = ai_engine
     
     def generate_flashcards(self, analysis_data: Dict, analysis_id: str) -> List[str]:
-        """Generate high-quality flashcards using AI"""
+        """Generate high-quality flashcards using AI (Lite Tier)"""
         flashcards = []
         
-        if not self.ai_engine.model:
-             # Fallback to a basic card if model is offline
+        if not self.ai_engine.model_lite:
              return [self.db_manager.save_flashcard({
                  'analysis_id': analysis_id,
                  'front_text': "What was the main subject?",
@@ -991,7 +1001,6 @@ class FlashcardManager:
              })]
 
         try:
-            # Create a prompt to generate QA pairs
             qa_prompt = f"""Based on the following analysis, create exactly 4 highly-effective educational flashcards. 
             Formulate them as Question and Answer pairs. 
             The questions should test deep understanding, not just rote memorization.
@@ -1009,11 +1018,10 @@ class FlashcardManager:
             Facts: {analysis_data.get('fun_facts', '')}
             """
             
-            # Use lower temperature for structured JSON output
+            # Use Lite Tier for high-speed structural generation
             generation_config = {"temperature": 0.2, "max_output_tokens": 800}
-            response = self.ai_engine.model.generate_content(qa_prompt, generation_config=generation_config)
+            response = self.ai_engine.model_lite.generate_content(qa_prompt, generation_config=generation_config)
             
-            # Clean up the response to ensure it's valid JSON (sometimes models add markdown backticks)
             json_str = response.text.strip()
             if json_str.startswith("```json"):
                 json_str = json_str[7:]
@@ -1024,14 +1032,13 @@ class FlashcardManager:
                 
             qa_pairs = json.loads(json_str.strip())
             
-            # Save generated cards to database
             for i, pair in enumerate(qa_pairs):
                 if 'q' in pair and 'a' in pair:
                     flashcard_data = {
                         'analysis_id': analysis_id,
                         'front_text': pair['q'],
                         'back_text': pair['a'],
-                        'difficulty': 1 if i < 2 else 2 # Make the latter half slightly harder by default
+                        'difficulty': 1 if i < 2 else 2
                     }
                     flashcard_id = self.db_manager.save_flashcard(flashcard_data)
                     flashcards.append(flashcard_id)
@@ -1410,8 +1417,8 @@ class XyliaApp:
             
             if st.button("Reanalyze at This Depth", key="fractal_analyze_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
-                if image and self.ai_engine.model:
-                    with st.spinner(f"Xylia is recalibrating to {depth} depth..."):
+                if image and self.ai_engine.model_main:
+                    with st.spinner(f"Xylia is recalibrating to {depth} depth using the Main Engine..."):
                         prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant.
 
 You have already performed a standard analysis of this image. Now, re-analyze the SAME image but shift your entire intellectual framework to the following scale of observation:
@@ -1424,7 +1431,8 @@ Previous summary for context: {analysis_data.get('quick_summary', '')[:500]}
 Provide a completely new, detailed analysis at this specific depth. Do NOT repeat the standard analysis. Go deep into this specific scale. Use rich, expert-level language appropriate for this depth."""
 
                         try:
-                            response = self.ai_engine.model.generate_content(
+                            # Requires multimodal context -> Main Tier
+                            response = self.ai_engine.model_main.generate_content(
                                 [prompt, image],
                                 generation_config={"temperature": 0.8, "max_output_tokens": 2048}
                             )
@@ -1432,7 +1440,7 @@ Provide a completely new, detailed analysis at this specific depth. Do NOT repea
                         except Exception as e:
                             st.error(f"Fractal analysis error: {str(e)}")
                 else:
-                    st.warning("Image data not available for re-analysis.")
+                    st.warning("Multimodal engine unavailable.")
             
             if st.session_state.fractal_depth_result:
                 st.markdown("---")
@@ -1445,8 +1453,8 @@ Provide a completely new, detailed analysis at this specific depth. Do NOT repea
             
             if st.button("Activate 4D Lens", key="temporal_activate_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
-                if image and self.ai_engine.model:
-                    with st.spinner("Xylia is reconstructing the timeline..."):
+                if image and self.ai_engine.model_main:
+                    with st.spinner("Xylia is reconstructing the timeline using the Main Engine..."):
                         prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant.
 
 Analyze this image as a frozen frame extracted from a continuous physical timeline. Use the visual evidence to reconstruct its causal history and project its future state.
@@ -1469,7 +1477,8 @@ Project what this exact scene will look like at three timescales:
 Base each projection on the laws of physics, biology, and entropy. Be vivid and concrete."""
 
                         try:
-                            response = self.ai_engine.model.generate_content(
+                            # Requires multimodal context -> Main Tier
+                            response = self.ai_engine.model_main.generate_content(
                                 [prompt, image],
                                 generation_config={"temperature": 0.85, "max_output_tokens": 3000}
                             )
@@ -1477,7 +1486,7 @@ Base each projection on the laws of physics, biology, and entropy. Be vivid and 
                         except Exception as e:
                             st.error(f"Temporal analysis error: {str(e)}")
                 else:
-                    st.warning("Image data not available for temporal analysis.")
+                    st.warning("Multimodal engine unavailable.")
             
             if st.session_state.temporal_result:
                 st.markdown("---")
@@ -1490,8 +1499,8 @@ Base each projection on the laws of physics, biology, and entropy. Be vivid and 
             
             if st.button("Start Deduction", key="socratic_start_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
-                if image and self.ai_engine.model:
-                    with st.spinner("Xylia is scanning for anomalies..."):
+                if image and self.ai_engine.model_main:
+                    with st.spinner("Xylia is scanning for anomalies using the Main Engine..."):
                         prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant acting as a master detective and educator.
 
 Analyze this image deeply. Find the single MOST fascinating, non-obvious anomaly, hidden pattern, contradiction, or subtle detail that a casual observer would miss.
@@ -1506,7 +1515,8 @@ Respond in EXACTLY this JSON format (and nothing else):
 }}"""
 
                         try:
-                            response = self.ai_engine.model.generate_content(
+                            # Requires multimodal context -> Main Tier
+                            response = self.ai_engine.model_main.generate_content(
                                 [prompt, image],
                                 generation_config={"temperature": 0.9, "max_output_tokens": 1500}
                             )
@@ -1553,8 +1563,8 @@ Respond in EXACTLY this JSON format (and nothing else):
                 )
                 
                 if user_hypothesis and st.button("Submit Hypothesis", key="socratic_submit_btn"):
-                    if self.ai_engine.model:
-                        with st.spinner("Xylia is evaluating your deduction..."):
+                    if self.ai_engine.model_base:
+                        with st.spinner("Xylia is evaluating your deduction using the Base Engine..."):
                             eval_prompt = f"""You are Xylia. Nik submitted his hypothesis to your detective challenge.
 
 Your original question: {st.session_state.socratic_question}
@@ -1564,7 +1574,8 @@ Nik's hypothesis: {user_hypothesis}
 Evaluate Nik's answer. Be encouraging but honest. If he's close, praise his observation skills and fill in what he missed. If he's off, gently redirect him toward the truth. Keep it conversational and engaging. End with the full correct explanation."""
 
                             try:
-                                eval_response = self.ai_engine.model.generate_content(
+                                # Text reasoning -> Base Tier (Open Weights)
+                                eval_response = self.ai_engine.model_base.generate_content(
                                     eval_prompt,
                                     generation_config={"temperature": 0.7, "max_output_tokens": 1000}
                                 )
@@ -1589,8 +1600,8 @@ Evaluate Nik's answer. Be encouraging but honest. If he's close, praise his obse
             st.caption("Every claim Xylia made is audited against the actual file evidence. Claims are tagged as [SEEN], [INFERRED], or [ASSUMED].")
 
             if st.button("Run Evidence Audit", key="grounding_btn", use_container_width=True):
-                if self.ai_engine.model:
-                    with st.spinner("Xylia is auditing her own reasoning..."):
+                if self.ai_engine.model_main:
+                    with st.spinner("Xylia is auditing her own reasoning using the Main Engine..."):
                         # Gather domain context if available
                         domain_ctx = ""
                         profile = st.session_state.domain_profile
@@ -1620,7 +1631,9 @@ Be ruthlessly honest. If you said something in the analysis that you cannot poin
                         try:
                             image = self._get_analysis_image(analysis_data)
                             content = [prompt, image] if image else [prompt]
-                            response = self.ai_engine.model.generate_content(
+                            
+                            # Requires multimodal context -> Main Tier
+                            response = self.ai_engine.model_main.generate_content(
                                 content,
                                 generation_config={"temperature": 0.3, "max_output_tokens": 3000}
                             )
@@ -1628,7 +1641,7 @@ Be ruthlessly honest. If you said something in the analysis that you cannot poin
                         except Exception as e:
                             st.error(f"Grounding audit error: {str(e)}")
                 else:
-                    st.warning("AI model not available.")
+                    st.warning("Multimodal engine unavailable.")
 
             if st.session_state.grounding_result:
                 st.markdown("---")
@@ -1684,8 +1697,8 @@ Be ruthlessly honest. If you said something in the analysis that you cannot poin
             st.caption("Xylia extracts structured knowledge from this analysis. Over time, this builds your personal Knowledge Graph.")
 
             if st.button("Extract Knowledge Nodes", key="crystal_btn", use_container_width=True):
-                if self.ai_engine.model:
-                    with st.spinner("Xylia is crystallizing knowledge..."):
+                if self.ai_engine.model_lite:
+                    with st.spinner("Xylia is crystallizing knowledge using the Lite Engine..."):
                         # Build context from existing graph
                         existing_nodes = ""
                         if st.session_state.knowledge_graph:
@@ -1723,7 +1736,9 @@ Output ONLY the nodes in the format above. No preamble."""
                         try:
                             image = self._get_analysis_image(analysis_data)
                             content = [prompt, image] if image else [prompt]
-                            response = self.ai_engine.model.generate_content(
+                            
+                            # Text extraction -> Lite Tier
+                            response = self.ai_engine.model_lite.generate_content(
                                 content,
                                 generation_config={"temperature": 0.4, "max_output_tokens": 2000}
                             )
@@ -1777,8 +1792,8 @@ Output ONLY the nodes in the format above. No preamble."""
 
             if st.button("Enter Discovery Mode", key="discovery_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
-                if self.ai_engine.model:
-                    with st.spinner("Xylia is entering Discovery Mode — this is deep work..."):
+                if self.ai_engine.model_main:
+                    with st.spinner("Xylia is entering Discovery Mode using the Main Engine — this is deep work..."):
                         # Build full context from all layers
                         domain_ctx = ""
                         profile = st.session_state.domain_profile
@@ -1848,7 +1863,9 @@ End with a one-paragraph RESEARCH VERDICT: your best assessment of which hypothe
 
                         try:
                             content = [prompt, image] if image else [prompt]
-                            response = self.ai_engine.model.generate_content(
+                            
+                            # Deep multimodal research -> Main Tier
+                            response = self.ai_engine.model_main.generate_content(
                                 content,
                                 generation_config={"temperature": 0.85, "max_output_tokens": 4000}
                             )
@@ -2967,7 +2984,8 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                         else:
                              payload.append({"role": "user", "parts": [full_prompt]})
                         
-                        response = self.ai_engine.model.generate_content(payload)
+                        # Complex conversational reasoning -> Main Tier
+                        response = self.ai_engine.model_main.generate_content(payload)
                         reply = response.text
                         st.markdown(reply)
                         
@@ -3150,7 +3168,8 @@ Address Nik gently as your fellow researcher."""
                         parts = file_parts + [full_prompt] if file_parts else [full_prompt]
                         payload.append({"role": "user", "parts": parts})
 
-                        response = self.ai_engine.model.generate_content(
+                        # Deep multimodal reasoning -> Main Tier
+                        response = self.ai_engine.model_main.generate_content(
                             payload,
                             generation_config={"temperature": 0.85, "max_output_tokens": 4096}
                         )
