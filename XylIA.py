@@ -2857,24 +2857,26 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         # Local Session Export
         if len(st.session_state.discovery_messages) > 1:
-            st.markdown("<div style='display: flex; gap: 10px; margin-bottom: 20px; opacity: 0.7;'>", unsafe_allow_html=True)
-            exp_col1, exp_col2, exp_col3, _ = st.columns([1, 1, 1, 7])
+            st.markdown("<div style='margin-bottom: 20px; opacity: 0.9;'>", unsafe_allow_html=True)
+            f_col, b_col, _ = st.columns([1.5, 2, 6])
+            with f_col:
+                exp_fmt = st.selectbox("Export Format", ["TXT", "JSON", "HTML"], key="disc_fmt", label_visibility="collapsed")
             
             # Build current session export text
             session_txt = f"# Xylia — Frontier Discovery Session\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
             for msg in st.session_state.discovery_messages:
                 role = "Nik" if msg['role'] == 'user' else "Xylia"
                 session_txt += f"[{role}]: {msg['content']}\n\n"
-            
-            with exp_col1:
-                st.download_button("📥 TXT", data=session_txt, file_name="discovery_session.txt", mime="text/plain", key="disc_export_txt", use_container_width=True)
-            with exp_col2:
-                session_json = json.dumps(st.session_state.discovery_messages, indent=2)
-                st.download_button("📥 JSON", data=session_json, file_name="discovery_session.json", mime="application/json", key="disc_export_json", use_container_width=True)
-            with exp_col3:
-                # PDF requires weasyprint and HTML conversion. For this local button, we'll provide an HTML file as an easy alternative if PDF is complex here.
-                session_html = f"<html><body><h2>Xylia Discovery Session</h2><pre>{session_txt}</pre></body></html>"
-                st.download_button("📥 HTML", data=session_html, file_name="discovery_session.html", mime="text/html", key="disc_export_html", use_container_width=True)
+                
+            with b_col:
+                if exp_fmt == "TXT":
+                    st.download_button("📥 Download", data=session_txt, file_name="discovery_session.txt", mime="text/plain", key="disc_export_txt", use_container_width=True)
+                elif exp_fmt == "JSON":
+                    session_json = json.dumps(st.session_state.discovery_messages, indent=2)
+                    st.download_button("📥 Download", data=session_json, file_name="discovery_session.json", mime="application/json", key="disc_export_json", use_container_width=True)
+                elif exp_fmt == "HTML":
+                    session_html = f"<html><body style='background:#f4f4f4; padding:20px; font-family:sans-serif;'><div style='background:white; border-radius:10px; padding:30px; box-shadow:0px 4px 10px rgba(0,0,0,0.1);'><h2>Xylia Discovery Session</h2><pre style='white-space: pre-wrap;'>{session_txt}</pre></div></body></html>"
+                    st.download_button("📥 Download", data=session_html, file_name="discovery_session.html", mime="text/html", key="disc_export_html", use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Display existing discovery messages
