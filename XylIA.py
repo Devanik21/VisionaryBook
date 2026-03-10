@@ -1111,6 +1111,14 @@ class XyliaApp:
             st.session_state.knowledge_graph = []
         if 'discovery_result' not in st.session_state:
             st.session_state.discovery_result = None
+        if 'discovery_mode' not in st.session_state:
+            st.session_state.discovery_mode = False
+        if 'discovery_messages' not in st.session_state:
+            st.session_state.discovery_messages = [{"role": "assistant", "content": "Frontier Discovery Engine active. Upload any file or describe your research question. I will isolate anomalies, generate falsifiable hypotheses, and prescribe experiments."}]
+        if 'discovery_chat_history' not in st.session_state:
+            st.session_state.discovery_chat_history = []
+        if 'discovery_file' not in st.session_state:
+            st.session_state.discovery_file = None
     
     def render_login_screen(self):
         """Render transparent login screen"""
@@ -2363,6 +2371,7 @@ Analysis ID: {analysis_id}
                     st.session_state.uploaded_image = None
                     st.session_state.study_mode = False
                     st.session_state.qa_mode = False
+                    st.session_state.discovery_mode = False
                     st.rerun()
             
             with col2:
@@ -2380,6 +2389,7 @@ Analysis ID: {analysis_id}
                                 }
                     st.session_state.study_mode = False
                     st.session_state.qa_mode = False
+                    st.session_state.discovery_mode = False
                     st.rerun()
 
             col_study, col_qa = st.columns(2)
@@ -2387,12 +2397,21 @@ Analysis ID: {analysis_id}
                 if st.button("Study", key="side_study", use_container_width=True, type="primary", disabled=not st.session_state.current_analysis):
                     st.session_state.study_mode = True
                     st.session_state.qa_mode = False
+                    st.session_state.discovery_mode = False
                     st.rerun()
             with col_qa:
                 if st.button("Q & A", key="side_qa", use_container_width=True):
                     st.session_state.qa_mode = True
                     st.session_state.study_mode = False
+                    st.session_state.discovery_mode = False
                     st.rerun()
+            
+            # Dedicated Discovery Mode button
+            if st.button("Frontier Discovery", key="side_discovery", use_container_width=True, type="primary"):
+                st.session_state.discovery_mode = True
+                st.session_state.qa_mode = False
+                st.session_state.study_mode = False
+                st.rerun()
             
             # Context-specific chat controls in sidebar
             if st.session_state.get('qa_mode', False):
@@ -2407,6 +2426,21 @@ Analysis ID: {analysis_id}
                 with col_c2:
                     if st.button("Clear", key="side_qa_clear", use_container_width=True, help="Clear Screen (Keeps Memory)"):
                         st.session_state.display_messages = []
+                        st.rerun()
+            
+            # Discovery mode sidebar controls
+            if st.session_state.get('discovery_mode', False):
+                st.markdown('<div style="margin-top: 10px;"></div>', unsafe_allow_html=True)
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    if st.button("Reset", key="side_disc_reset", use_container_width=True, help="New Discovery Session"):
+                        st.session_state.discovery_messages = [{"role": "assistant", "content": "Frontier Discovery Engine active. Upload any file or describe your research question. I will isolate anomalies, generate falsifiable hypotheses, and prescribe experiments."}]
+                        st.session_state.discovery_chat_history = []
+                        st.session_state.discovery_file = None
+                        st.rerun()
+                with col_d2:
+                    if st.button("Clear", key="side_disc_clear", use_container_width=True, help="Clear Screen (Keeps Memory)"):
+                        st.session_state.discovery_messages = []
                         st.rerun()
             
             st.markdown("<br>", unsafe_allow_html=True)
@@ -2588,6 +2622,130 @@ Analysis ID: {analysis_id}
                     except Exception as e:
                         st.error(f"Xylia encountered an anomaly: {str(e)}")
     
+    def render_discovery_mode(self):
+        """Frontier Discovery Engine — Full-window autonomous research workspace."""
+        st.markdown("## Frontier Discovery Engine")
+        st.markdown("<p style='color: var(--secondary-text);'>Xylia is operating as an autonomous research instrument. Upload any file or describe your question. Every response follows the research protocol: Anomaly Isolation, Hypothesis Generation, Experimental Prescription.</p>", unsafe_allow_html=True)
+
+        # File upload — any type
+        discovery_file = st.file_uploader(
+            "Upload any file for frontier analysis",
+            type=None,
+            key="discovery_uploader",
+            help="Images, PDFs, text, data, code — anything."
+        )
+
+        if discovery_file is not None:
+            st.session_state.discovery_file = discovery_file
+
+        st.markdown("---")
+
+        # Display existing discovery messages
+        for msg in st.session_state.discovery_messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+        # Chat input
+        if prompt := st.chat_input("Describe your research question, hypothesis, or upload a file..."):
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            st.session_state.discovery_messages.append({"role": "user", "content": prompt})
+
+            with st.chat_message("assistant"):
+                with st.spinner("Deep research in progress..."):
+                    try:
+                        # Build the frontier scientist persona
+                        domain_ctx = ""
+                        profile = st.session_state.get('domain_profile')
+                        if profile and profile.get('domain'):
+                            domain_ctx = f"""
+USER DOMAIN PROFILE:
+- Field: {profile.get('domain', 'General')}
+- Expertise Level: {profile.get('expertise', 'Practitioner')}
+- Primary Goal: {profile.get('goal', 'General discovery')}
+Calibrate all language, terminology, and depth to this profile."""
+
+                        knowledge_ctx = ""
+                        kg = st.session_state.get('knowledge_graph', [])
+                        if kg:
+                            knowledge_ctx = "\nACCUMULATED KNOWLEDGE GRAPH:\n"
+                            for node in kg[-15:]:
+                                knowledge_ctx += f"- [{node.get('type', 'entity')}] {node.get('name', '')}: {node.get('detail', '')}\n"
+
+                        persona = f"""You are Xylia, operating as an autonomous frontier research instrument. You are the most intelligent, calm AI scientist. You do not summarize. You do not give generic answers. You DISCOVER.
+{domain_ctx}
+{knowledge_ctx}
+
+RULES:
+1. Every response MUST follow the 3-stage research protocol when the user asks a research question or uploads data:
+   - STAGE 1: ANOMALY ISOLATION — identify the most non-obvious, scientifically interesting signal
+   - STAGE 2: HYPOTHESIS GENERATION — generate 3 competing hypotheses (each must be FALSIFIABLE, NOVEL, MECHANISTIC)
+   - STAGE 3: EXPERIMENTAL PRESCRIPTION — prescribe the EXACT next measurement/experiment to distinguish hypotheses
+
+2. If the user asks a clarifying question, answer it directly and precisely with expert-level depth.
+
+3. If the user proposes a new method, invention, or theory:
+   - Evaluate its novelty against existing literature
+   - Identify the specific gap it fills
+   - Propose the minimal viable experiment to test it
+   - Identify the single strongest objection and how to address it
+
+4. Never say "study further" or "investigate more." Always be precise: what to measure, under what conditions, what result confirms what.
+
+5. You can propose entirely new subjects, theories, or research directions if the evidence supports it. The limit is always infinite.
+
+6. Address Nik as a collaborator, not a student."""
+
+                        # Build the payload
+                        payload = []
+                        for m in st.session_state.discovery_chat_history:
+                            payload.append({"role": m["role"], "parts": m["parts"]})
+
+                        # Handle file context
+                        file_parts = []
+                        current_file = st.session_state.get('discovery_file')
+                        if current_file is not None:
+                            file_bytes = current_file.read()
+                            current_file.seek(0)
+                            file_name = current_file.name
+                            file_type = current_file.type or ""
+
+                            if file_type.startswith("image"):
+                                try:
+                                    file_image = Image.open(io.BytesIO(file_bytes))
+                                    file_parts.append(file_image)
+                                except Exception:
+                                    file_parts.append(f"[File: {file_name}, binary content, {len(file_bytes)} bytes]")
+                            elif file_type.startswith("text") or file_name.endswith(('.py', '.txt', '.md', '.csv', '.json', '.xml', '.html', '.css', '.js', '.yaml', '.yml', '.toml', '.cfg', '.ini', '.log', '.tex', '.r', '.m')):
+                                try:
+                                    text_content = file_bytes.decode('utf-8', errors='replace')
+                                    file_parts.append(f"[File: {file_name}]\n{text_content[:10000]}")
+                                except Exception:
+                                    file_parts.append(f"[File: {file_name}, could not decode, {len(file_bytes)} bytes]")
+                            else:
+                                file_parts.append(f"[File: {file_name}, type: {file_type}, size: {len(file_bytes)} bytes. Binary file — describe what you know about this file format and what analysis is possible.]")
+
+                        full_prompt = f"{persona}\n\nUser: {prompt}"
+                        parts = file_parts + [full_prompt] if file_parts else [full_prompt]
+                        payload.append({"role": "user", "parts": parts})
+
+                        response = self.ai_engine.model.generate_content(
+                            payload,
+                            generation_config={"temperature": 0.85, "max_output_tokens": 4096}
+                        )
+                        reply = response.text
+                        st.markdown(reply)
+
+                        st.session_state.discovery_messages.append({"role": "assistant", "content": reply})
+
+                        # Save to discovery memory
+                        st.session_state.discovery_chat_history.append({"role": "user", "parts": [prompt]})
+                        st.session_state.discovery_chat_history.append({"role": "model", "parts": [reply]})
+
+                    except Exception as e:
+                        st.error(f"Discovery Engine error: {str(e)}")
+
     def analyze_image_workflow(self, image: Image.Image, settings: Dict):
         """Complete image analysis workflow"""
         with st.spinner("🔍 Analyzing image... This may take a moment."):
@@ -2646,7 +2804,10 @@ Analysis ID: {analysis_id}
         self.render_history_sidebar()
         
         # Main content area
-        if st.session_state.qa_mode:
+        if st.session_state.get('discovery_mode', False):
+            self.render_discovery_mode()
+        
+        elif st.session_state.qa_mode:
             self.render_qa_mode()
             
         elif st.session_state.study_mode and st.session_state.current_analysis:
