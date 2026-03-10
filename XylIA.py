@@ -2827,18 +2827,55 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         st.markdown("## Frontier Discovery Engine")
         # Removed mandatory intro p tag as per user request for no prompt/clean look
 
-        # File upload — any type
+        st.markdown("""
+        <style>
+            .stFileUploader > div > div {
+                min-height: 50px !important;
+                padding: 10px !important;
+            }
+            .stFileUploader > div > div > div > svg {
+                display: none;
+            }
+            .stFileUploader > div > div > div > div > small {
+                display: none;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # File upload — any type (styled smaller)
         discovery_file = st.file_uploader(
-            "Upload any file for frontier analysis",
+            "Attach Frontier Context",
             type=None,
             key="discovery_uploader",
-            help="Images, PDFs, text, data, code — anything."
+            label_visibility="collapsed"
         )
 
         if discovery_file is not None:
             st.session_state.discovery_file = discovery_file
 
         st.markdown("---")
+
+        # Local Session Export
+        if len(st.session_state.discovery_messages) > 1:
+            st.markdown("<div style='display: flex; gap: 10px; margin-bottom: 20px; opacity: 0.7;'>", unsafe_allow_html=True)
+            exp_col1, exp_col2, exp_col3, _ = st.columns([1, 1, 1, 7])
+            
+            # Build current session export text
+            session_txt = f"# Xylia — Frontier Discovery Session\nGenerated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+            for msg in st.session_state.discovery_messages:
+                role = "Nik" if msg['role'] == 'user' else "Xylia"
+                session_txt += f"[{role}]: {msg['content']}\n\n"
+            
+            with exp_col1:
+                st.download_button("📥 TXT", data=session_txt, file_name="discovery_session.txt", mime="text/plain", key="disc_export_txt", use_container_width=True)
+            with exp_col2:
+                session_json = json.dumps(st.session_state.discovery_messages, indent=2)
+                st.download_button("📥 JSON", data=session_json, file_name="discovery_session.json", mime="application/json", key="disc_export_json", use_container_width=True)
+            with exp_col3:
+                # PDF requires weasyprint and HTML conversion. For this local button, we'll provide an HTML file as an easy alternative if PDF is complex here.
+                session_html = f"<html><body><h2>Xylia Discovery Session</h2><pre>{session_txt}</pre></body></html>"
+                st.download_button("📥 HTML", data=session_html, file_name="discovery_session.html", mime="text/html", key="disc_export_html", use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # Display existing discovery messages
         for msg in st.session_state.discovery_messages:
