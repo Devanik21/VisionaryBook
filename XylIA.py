@@ -678,6 +678,20 @@ class DatabaseManager:
             key=lambda x: x.get('timestamp', ''), 
             reverse=True
         )
+        return sorted_chats[:limit]
+
+    def get_recent_discoveries(self, limit: int = 10) -> List[Dict]:
+        """Get recent frontier discovery sessions"""
+        # Search for sessions of type 'discovery'
+        discoveries = self.sessions_db.search(self.query.type == 'discovery')
+        
+        # Sort by timestamp (newest first)
+        sorted_disc = sorted(
+            discoveries, 
+            key=lambda x: x.get('timestamp', ''), 
+            reverse=True
+        )
+        return sorted_disc[:limit]
         
         return sorted_chats[:limit]
 
@@ -1117,6 +1131,8 @@ class XyliaApp:
             st.session_state.discovery_messages = []
         if 'discovery_chat_history' not in st.session_state:
             st.session_state.discovery_chat_history = []
+        if 'current_discovery_id' not in st.session_state:
+            st.session_state.current_discovery_id = None
         if 'discovery_file' not in st.session_state:
             st.session_state.discovery_file = None
     
@@ -2456,8 +2472,9 @@ Analysis ID: {analysis_id}
                 col_d1, col_d2 = st.columns(2)
                 with col_d1:
                     if st.button("Reset", key="side_disc_reset", use_container_width=True, help="New Discovery Session"):
-                        st.session_state.discovery_messages = [{"role": "assistant", "content": "Frontier Discovery Engine active. Upload any file or describe your research question. I will isolate anomalies, generate falsifiable hypotheses, and prescribe experiments."}]
+                        st.session_state.discovery_messages = []
                         st.session_state.discovery_chat_history = []
+                        st.session_state.current_discovery_id = None
                         st.session_state.discovery_file = None
                         st.rerun()
                 with col_d2:
@@ -2521,6 +2538,28 @@ Analysis ID: {analysis_id}
                         st.session_state.current_chat_id = chat['id']
                         st.session_state.qa_mode = True
                         st.session_state.study_mode = False
+                        st.rerun()
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown('<div class="sidebar-header">Discovery History</div>', unsafe_allow_html=True)
+            
+            # Get recent discovery sessions
+            recent_disc = self.db_manager.get_recent_discoveries(limit=10)
+            
+            for disc in recent_disc:
+                with st.expander(f"{disc['title'][:20]}...", expanded=False):
+                    st.markdown(f"**{len(disc.get('display_messages', []))} Messages**")
+                    st.caption(f"📅 {disc['timestamp'][:10]}")
+                    
+                    if st.button("Open", key=f"view_disc_{disc['id']}", use_container_width=True):
+                        st.session_state.discovery_chat_history = disc['chat_history']
+                        st.session_state.discovery_messages = disc['display_messages']
+                        st.session_state.current_discovery_id = disc['id']
+                        st.session_state.discovery_mode = True
+                        st.session_state.qa_mode = False
+                        st.session_state.study_mode = False
+                        st.session_state.current_analysis = None
+                        st.session_state.uploaded_image = None
                         st.rerun()
 
             st.markdown("<br><br>", unsafe_allow_html=True)
@@ -2856,6 +2895,38 @@ Address Nik gently as your fellow researcher."""
                         # Save to discovery memory
                         st.session_state.discovery_chat_history.append({"role": "user", "parts": [prompt]})
                         st.session_state.discovery_chat_history.append({"role": "model", "parts": [reply]})
+
+                        # Generate title and save session
+                        disc_title = "New Discovery"
+                        for m in st.session_state.discovery_messages:
+                            if m['role'] == 'user':
+                                disc_title = m['content'][:30] + "..." if len(m['content']) > 30 else m['content']
+                                break
+
+                        # Sanitize history to prevent image JSON errors
+                        sanitized_disc_history = []
+                        for m in st.session_state.discovery_chat_history:
+                            new_m = {"role": m["role"], "parts": []}
+                            for part in m.get("parts", []):
+                                if isinstance(part, str):
+                                    new_m["parts"].append(part)
+                                else:
+                                    new_m["parts"].append("[Multimodal Content]")
+                            sanitized_disc_history.append(new_m)
+
+                        if not st.session_state.get('current_discovery_id'):
+                            st.session_state.current_discovery_id = str(uuid.uuid4())
+
+                        disc_record = {
+                            'id': st.session_state.current_discovery_id,
+                            'type': 'discovery',
+                            'timestamp': datetime.datetime.now().isoformat(),
+                            'title': disc_title,
+                            'chat_history': sanitized_disc_history,
+                            'display_messages': st.session_state.discovery_messages
+                        }
+                        
+                        self.db_manager.sessions_db.upsert(disc_record, self.db_manager.query.id == st.session_state.current_discovery_id)
 
                     except Exception as e:
                         st.error(f"Discovery Engine error: {str(e)}")
