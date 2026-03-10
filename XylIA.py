@@ -878,21 +878,21 @@ class AIAnalysisEngine:
         base_prompt = category_prompts.get(category, category_prompts["General"])
         
         try:
-            # 1. Quick Summary (Main Tier - Needs Image)
+            # 1. Quick Summary (Lite Tier - Vision & Speed)
             quick_prompt = f"{base_prompt}\n\nProvide a concise yet thorough overview of the image using bullet points."
-            quick_response = self.model_main.generate_content([quick_prompt, image], generation_config=generation_config)
+            quick_response = self.model_lite.generate_content([quick_prompt, image], generation_config=generation_config)
             quick_summary = quick_response.text
             
-            # 2. Detailed Description (Main Tier - Needs Image)
+            # 2. Detailed Description (Lite Tier - Vision)
             detailed_prompt = f"{base_prompt}\n\nDeeply deconstruct this observation. Provide an expert-level narrative that explores the lineage, purpose, technical mastery, and universal connections of what is seen."
-            detailed_response = self.model_main.generate_content([detailed_prompt, image], generation_config=generation_config)
+            detailed_response = self.model_lite.generate_content([detailed_prompt, image], generation_config=generation_config)
             detailed_description = detailed_response.text
             
-            # 3. Fun Facts (Conditional) (Main Tier - Needs Image)
+            # 3. Fun Facts (Conditional) (Lite Tier - Vision)
             fun_facts = "The path of trivia was not selected for this inquiry."
             if settings.get("include_facts", True):
                 facts_prompt = f"{base_prompt}\n\nReveal 3-5 hidden truths or fascinating enigmas about what is observed — insights that only a master of the highest order would recognize."
-                facts_response = self.model_main.generate_content([facts_prompt, image], generation_config=generation_config)
+                facts_response = self.model_lite.generate_content([facts_prompt, image], generation_config=generation_config)
                 fun_facts = facts_response.text
             
             # 4. Extract intelligent tags via AI (Lite Tier - Fast Text Processing)
@@ -1417,8 +1417,8 @@ class XyliaApp:
             
             if st.button("Reanalyze at This Depth", key="fractal_analyze_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
-                if image and self.ai_engine.model_main:
-                    with st.spinner(f"Xylia is recalibrating to {depth} depth using the Main Engine..."):
+                if image and self.ai_engine.model_base:
+                    with st.spinner(f"Xylia is recalibrating to {depth} depth using the Base Engine..."):
                         prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant.
 
 You have already performed a standard analysis of this image. Now, re-analyze the SAME image but shift your entire intellectual framework to the following scale of observation:
@@ -1431,8 +1431,8 @@ Previous summary for context: {analysis_data.get('quick_summary', '')[:500]}
 Provide a completely new, detailed analysis at this specific depth. Do NOT repeat the standard analysis. Go deep into this specific scale. Use rich, expert-level language appropriate for this depth."""
 
                         try:
-                            # Requires multimodal context -> Main Tier
-                            response = self.ai_engine.model_main.generate_content(
+                            # Requires multimodal context -> Base Tier
+                            response = self.ai_engine.model_base.generate_content(
                                 [prompt, image],
                                 generation_config={"temperature": 0.8, "max_output_tokens": 2048}
                             )
@@ -1440,7 +1440,7 @@ Provide a completely new, detailed analysis at this specific depth. Do NOT repea
                         except Exception as e:
                             st.error(f"Fractal analysis error: {str(e)}")
                 else:
-                    st.warning("Multimodal engine unavailable.")
+                    st.warning("Base engine unavailable.")
             
             if st.session_state.fractal_depth_result:
                 st.markdown("---")
@@ -1453,8 +1453,8 @@ Provide a completely new, detailed analysis at this specific depth. Do NOT repea
             
             if st.button("Activate 4D Lens", key="temporal_activate_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
-                if image and self.ai_engine.model_main:
-                    with st.spinner("Xylia is reconstructing the timeline using the Main Engine..."):
+                if image and self.ai_engine.model_base:
+                    with st.spinner("Xylia is reconstructing the timeline using the Base Engine..."):
                         prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant.
 
 Analyze this image as a frozen frame extracted from a continuous physical timeline. Use the visual evidence to reconstruct its causal history and project its future state.
@@ -1477,8 +1477,8 @@ Project what this exact scene will look like at three timescales:
 Base each projection on the laws of physics, biology, and entropy. Be vivid and concrete."""
 
                         try:
-                            # Requires multimodal context -> Main Tier
-                            response = self.ai_engine.model_main.generate_content(
+                            # Requires multimodal context -> Base Tier
+                            response = self.ai_engine.model_base.generate_content(
                                 [prompt, image],
                                 generation_config={"temperature": 0.85, "max_output_tokens": 3000}
                             )
@@ -1486,7 +1486,7 @@ Base each projection on the laws of physics, biology, and entropy. Be vivid and 
                         except Exception as e:
                             st.error(f"Temporal analysis error: {str(e)}")
                 else:
-                    st.warning("Multimodal engine unavailable.")
+                    st.warning("Base engine unavailable.")
             
             if st.session_state.temporal_result:
                 st.markdown("---")
@@ -1499,8 +1499,8 @@ Base each projection on the laws of physics, biology, and entropy. Be vivid and 
             
             if st.button("Start Deduction", key="socratic_start_btn", use_container_width=True):
                 image = self._get_analysis_image(analysis_data)
-                if image and self.ai_engine.model_main:
-                    with st.spinner("Xylia is scanning for anomalies using the Main Engine..."):
+                if image and self.ai_engine.model_base:
+                    with st.spinner("Xylia is scanning for anomalies using the Base Engine..."):
                         prompt = f"""You are Xylia, a highly capable, flexible, and modern AI assistant acting as a master detective and educator.
 
 Analyze this image deeply. Find the single MOST fascinating, non-obvious anomaly, hidden pattern, contradiction, or subtle detail that a casual observer would miss.
@@ -1515,8 +1515,8 @@ Respond in EXACTLY this JSON format (and nothing else):
 }}"""
 
                         try:
-                            # Requires multimodal context -> Main Tier
-                            response = self.ai_engine.model_main.generate_content(
+                            # Requires multimodal context -> Base Tier
+                            response = self.ai_engine.model_base.generate_content(
                                 [prompt, image],
                                 generation_config={"temperature": 0.9, "max_output_tokens": 1500}
                             )
@@ -1600,8 +1600,8 @@ Evaluate Nik's answer. Be encouraging but honest. If he's close, praise his obse
             st.caption("Every claim Xylia made is audited against the actual file evidence. Claims are tagged as [SEEN], [INFERRED], or [ASSUMED].")
 
             if st.button("Run Evidence Audit", key="grounding_btn", use_container_width=True):
-                if self.ai_engine.model_main:
-                    with st.spinner("Xylia is auditing her own reasoning using the Main Engine..."):
+                if self.ai_engine.model_base:
+                    with st.spinner("Xylia is auditing her own reasoning using the Base Engine..."):
                         # Gather domain context if available
                         domain_ctx = ""
                         profile = st.session_state.domain_profile
@@ -1632,8 +1632,8 @@ Be ruthlessly honest. If you said something in the analysis that you cannot poin
                             image = self._get_analysis_image(analysis_data)
                             content = [prompt, image] if image else [prompt]
                             
-                            # Requires multimodal context -> Main Tier
-                            response = self.ai_engine.model_main.generate_content(
+                            # Requires multimodal context -> Base Tier
+                            response = self.ai_engine.model_base.generate_content(
                                 content,
                                 generation_config={"temperature": 0.3, "max_output_tokens": 3000}
                             )
@@ -1641,7 +1641,7 @@ Be ruthlessly honest. If you said something in the analysis that you cannot poin
                         except Exception as e:
                             st.error(f"Grounding audit error: {str(e)}")
                 else:
-                    st.warning("Multimodal engine unavailable.")
+                    st.warning("Base engine unavailable.")
 
             if st.session_state.grounding_result:
                 st.markdown("---")
@@ -1697,8 +1697,8 @@ Be ruthlessly honest. If you said something in the analysis that you cannot poin
             st.caption("Xylia extracts structured knowledge from this analysis. Over time, this builds your personal Knowledge Graph.")
 
             if st.button("Extract Knowledge Nodes", key="crystal_btn", use_container_width=True):
-                if self.ai_engine.model_lite:
-                    with st.spinner("Xylia is crystallizing knowledge using the Lite Engine..."):
+                if self.ai_engine.model_base:
+                    with st.spinner("Xylia is crystallizing knowledge using the Base Engine..."):
                         # Build context from existing graph
                         existing_nodes = ""
                         if st.session_state.knowledge_graph:
@@ -1737,8 +1737,8 @@ Output ONLY the nodes in the format above. No preamble."""
                             image = self._get_analysis_image(analysis_data)
                             content = [prompt, image] if image else [prompt]
                             
-                            # Text extraction -> Lite Tier
-                            response = self.ai_engine.model_lite.generate_content(
+                            # Text extraction -> Base Tier
+                            response = self.ai_engine.model_base.generate_content(
                                 content,
                                 generation_config={"temperature": 0.4, "max_output_tokens": 2000}
                             )
@@ -2984,8 +2984,8 @@ Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                         else:
                              payload.append({"role": "user", "parts": [full_prompt]})
                         
-                        # Complex conversational reasoning -> Main Tier
-                        response = self.ai_engine.model_main.generate_content(payload)
+                        # Complex conversational reasoning -> Base Tier
+                        response = self.ai_engine.model_base.generate_content(payload)
                         reply = response.text
                         st.markdown(reply)
                         
