@@ -233,38 +233,19 @@ def load_custom_css():
         gap: 0.5rem;
     }}
     
-    /* Liquid Glass Audio Player */
+    /* Standard Audio Player - 90% Transparent */
     .transparent-audio audio {{
-        opacity: 0.85;
+        opacity: 0.1;
         height: 36px;
         width: 100%;
         max-width: 400px;
-        border-radius: 40px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         outline: none;
-        transition: all 0.3s ease;
+        transition: opacity 0.3s ease;
         margin-top: 10px;
     }}
     
     .transparent-audio audio:hover {{
-        opacity: 1.0;
-        box-shadow: 0 6px 20px rgba(0, 188, 212, 0.15);
-    }}
-    
-    /* Webkit-specific styling to override default browser controls and make it look like water/glass */
-    .transparent-audio audio::-webkit-media-controls-panel {{
-        background: rgba(30, 40, 50, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 40px;
-        padding: 5px;
-    }}
-    
-    .transparent-audio audio::-webkit-media-controls-play-button,
-    .transparent-audio audio::-webkit-media-controls-mute-button {{
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
+        opacity: 0.4;
     }}
     
     .section-content {{
