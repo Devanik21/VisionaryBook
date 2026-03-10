@@ -5,7 +5,7 @@ import io
 import base64
 import json
 from tinydb import TinyDB, Query
-import datetime 
+import datetime
 import uuid
 from gtts import gTTS
 import tempfile
@@ -835,8 +835,8 @@ class AIAnalysisEngine:
     # ... keep the rest of the class the same ...
     
     def analyze_image(self, image: Image.Image, settings: Dict) -> Dict:
-        """Analyze image using Gemini API with advanced settings"""
-        if not self.model:
+        """Analyze image using Gemini API with advanced settings (Lite Tier)"""
+        if not self.model_lite:
             raise ValueError("Gemini API not configured")
         
         language = settings.get("language", "English")
