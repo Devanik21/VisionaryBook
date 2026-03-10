@@ -642,12 +642,24 @@ class DatabaseManager:
                 title = msg['content'][:30] + "..." if len(msg['content']) > 30 else msg['content']
                 break
 
+        # Sanitize chat_history for JSON serialization (remove PIL images)
+        sanitized_history = []
+        for msg in chat_history:
+            new_msg = {"role": msg["role"], "parts": []}
+            for part in msg.get("parts", []):
+                if isinstance(part, str):
+                    new_msg["parts"].append(part)
+                else:
+                    # If it's an Image or any other non-serializable, replace with a tag
+                    new_msg["parts"].append("[Multimodal Content]")
+            sanitized_history.append(new_msg)
+
         session_record = {
             'id': session_id,
             'type': 'chat',
             'timestamp': datetime.datetime.now().isoformat(),
             'title': title,
-            'chat_history': chat_history,
+            'chat_history': sanitized_history,
             'display_messages': display_messages
         }
         
