@@ -1,0 +1,15 @@
+development:
+  adapter: tinydb
+  database: data/development.json
+
+test:
+  adapter: tinydb
+  database: data/test.json
+
+production:
+  adapter: postgresql
+  host: db
+  port: 5432
+  database: xylia_prod
+  username: xylia_user
+  password: <%= ENV['DATABASE_PASSWORD'] %>

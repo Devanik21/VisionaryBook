@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xylia-deployment
+  labels:
+    app: xylia
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: xylia
+  template:
+    metadata:
+      labels:
+        app: xylia
+    spec:
+      containers:
+      - name: xylia
+        image: devanik21/xylia:latest
+        ports:
+        - containerPort: 8501
+        env:
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: xylia-secrets
+              key: gemini-api-key
