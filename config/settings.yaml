@@ -1,0 +1,12 @@
+app:
+  name: "Xylia"
+  version: "1.0.0"
+  environment: "development"
+
+api:
+  timeout_seconds: 30
+  retry_attempts: 3
+
+ui:
+  theme: "dark"
+  animations_enabled: true
