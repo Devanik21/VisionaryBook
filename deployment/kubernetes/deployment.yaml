@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: xylia
-        image: devanik21/xylia:latest
+        image: devanik21/xylia:1.0.0
         ports:
         - containerPort: 8501
         env:

@@ -7,9 +7,5 @@ test:
   database: data/test.json
 
 production:
-  adapter: postgresql
-  host: db
-  port: 5432
-  database: xylia_prod
-  username: xylia_user
-  password: <%= ENV['DATABASE_PASSWORD'] %>
+  adapter: tinydb
+  database: data/production.json
